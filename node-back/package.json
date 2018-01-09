@@ -1,30 +1,33 @@
 {
-  "name": "zabbix-reactor",
-  "version": "1.0.1",
+  "name": "asterisk-reactor",
+  "version": "1.0.0",
   "main": "index.js",
-  "description": "OpenAPI for react components. Interacts with Zabbix-API.",
+  "description": "OpenAPI for react components. Interacts with Asterisk.",
   "scripts": {
     "prestart": "npm install",
     "start": "node index.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ars-anosov/zabbix-react.git"
+    "url": "git+https://github.com/ars-anosov/asterisk-stasis-react.git"
   },
   "keywords": [
-    "Zabbix",
+    "Asterisk",
     "Swagger"
   ],
   "author": "Arseniy Anosov",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ars-anosov/zabbix-react/issues"
+    "url": "https://github.com/ars-anosov/asterisk-stasis-react/issues"
   },
-  "homepage": "https://github.com/ars-anosov/zabbix-react#readme",
+  "homepage": "https://github.com/ars-anosov/asterisk-stasis-react#readme",
   "dependencies": {
+    "ari-client": "^1.1.1",
     "connect": "^3.2.0",
+    "dateformat": "^2.0.0",
     "js-yaml": "^3.3.0",
-    "request": "^2.83.0",
-    "swagger-tools": "0.10.3"
+    "mysql": "^2.15.0",
+    "nodejs-websocket": "1.7.0",
+    "swagger-tools": "^0.10.3"
   }
 }
