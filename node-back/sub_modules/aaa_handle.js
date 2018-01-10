@@ -4,7 +4,7 @@ var apiTools = require('./api_tools')
 
 exports.checkAuth = function(req, res, next) {
 
-  var mysqlOffice     = req.myObj.mysqlOffice
+  //var mysqlOffice     = req.myObj.mysqlOffice
   var args = {};
   
   if (req.swagger) {

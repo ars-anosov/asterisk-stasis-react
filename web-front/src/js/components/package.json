@@ -1,0 +1,26 @@
+{
+  "name": "asterisk-react-component",
+  "version": "1.0.0",
+  "description": "A package for ASterisk interaction by React components",
+  "main": "dist/asterisk-react-component.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ars-anosov/asterisk-stasis-react.git"
+  },
+  "keywords": [
+    "asterisk",
+    "react-component"
+  ],
+  "author": "Arseniy Anosov",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ars-anosov/asterisk-stasis-react/issues"
+  },
+  "homepage": "https://github.com/ars-anosov/asterisk-stasis-react#readme",
+  "dependencies": {
+    "swagger-client": "^3.3.3"
+  }
+}

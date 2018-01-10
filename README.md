@@ -24,7 +24,9 @@
 
 ### 1. Back: asterisk-stasis-reactor
 OpenAPI-сервер обрабатывает REST-запросы от React-компонент.
-Общается с Asterisk-ARI.  
+Общается с Asterisk-ARI.
+
+Собираю в Docker-контейнерах на машине с IP=192.168.13.97.
 
 #### 1.1 В Docker-контейнере NodeJS
 ```
@@ -34,16 +36,16 @@ docker run \
   --name asterisk-reactor-node \
   --publish=8004:8004 \
   --env="ARI_IP=192.168.16.14" \
-  --env="ARI_USER=aster" \
-  --env="ARI_PASS=aster" \
+  --env="ARI_USER=INSERT_USERNAME_HERE" \
+  --env="ARI_PASS=INSERT_PASSWORD_HERE" \
   -it \
   asterisk-reactor-node:latest
 ```
 Выскочить из контейнера : Ctrl+P+Q
 
-- WEB-интерфейс для тестовых запросов через Swagger-UI - [localhost:8004/spec-ui/](http://localhost:8004/spec-ui/)
-- OpenAPI-Spec файл доступен - [localhost:8004/spec/swagger.json](http://localhost:8004/spec/swagger.json)
-- API принимает REST-запросы - [localhost:8004/v2api](http://localhost:8004/v2api/)
+- WEB-интерфейс для тестовых запросов через Swagger-UI - [192.168.13.97:8004/spec-ui/](http://192.168.13.97:8004/spec-ui/)
+- OpenAPI-Spec файл доступен - [192.168.13.97:8004/spec/swagger.json](http://192.168.13.97:8004/spec/swagger.json)
+- API принимает REST-запросы - [192.168.13.97:8004/v2api](http://192.168.13.97:8004/v2api/)
 
 В поле "token" вписываем "test".
 
@@ -61,7 +63,7 @@ docker run \
 ```
 Выскочить из контейнера : Ctrl+P+Q
 
-Живые компоненты - [localhost:8005](http://localhost:8005/)
+Живые компоненты - [192.168.13.97:8005](http://192.168.13.97:8005/)
 
 #### 2.2. В своем React bundler
 Например через [create-react-app](https://reactjs.org/tutorial/tutorial.html)
@@ -102,7 +104,7 @@ import './index.css';
 
 window.localStorage.setItem('token', 'test')
 
-const specUrl = 'http://localhost:8004/spec/swagger.json'
+const specUrl = 'http://192.168.13.97:8004/spec/swagger.json'
 const swg = new OpenApiSwagger(specUrl)
 
 swg.connect((client, err) => {
@@ -122,7 +124,7 @@ swg.connect((client, err) => {
 
 - Содержимое **index.css** копируем отсюда [examples/css](https://github.com/ars-anosov/asterisk-stasis-react/tree/master/examples/css)
 
-Тыкаем компоненты на локальном web-сервере - [localhost:3000](http://localhost:3000/)
+Тыкаем компоненты на локальном web-сервере - [192.168.13.97:3000](http://192.168.13.97:3000/)
 
 ## Пилим проект
 
@@ -142,4 +144,4 @@ docker run \
   --name=swagger-editor \
   swaggerapi/swagger-editor
 ```
-Пишем файл спецификации - [localhost:8001](http://localhost:8001/), там же генерим Server API / Client SDK
+Пишем файл спецификации - [192.168.13.97:8001](http://192.168.13.97:8001/), там же генерим Server API / Client SDK

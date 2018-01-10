@@ -15,9 +15,9 @@ cd node-back
 
 Проверяем поле "host" в [api/asterisk-api.yaml](https://github.com/ars-anosov/asterisk-stasis-react/blob/master/node-back/api/asterisk-api.yaml)
 
-Если запускаем на своем машине
+Прописываем IP-адрес своей машины
 ```yaml
-host: 'localhost:8004'
+host: '192.168.13.97:8004'
 ```
 
 Запускаем "asterisk-reactor-node"
@@ -28,11 +28,11 @@ docker run \
   -w /asterisk-reactor-node \
   --publish=8004:8004 \
   --env="ARI_HOST=192.168.16.14" \
-  --env="ARI_USER=aster" \
-  --env="ARI_PASS=INSERT_PASS_HERE" \
+  --env="ARI_USER=INSERT_USERNAME_HERE" \
+  --env="ARI_PASS=INSERT_PASSWORD_HERE" \
   --env="DB_HOST=192.168.26.17" \
-  --env="DB_USER=admin" \
-  --env="DB_PASS=INSERT_PASS_HERE" \
+  --env="DB_USER=INSERT_USERNAME_HERE" \
+  --env="DB_PASS=INSERT_PASSWORD_HERE" \
   -it \
   node:8 bash
 ```

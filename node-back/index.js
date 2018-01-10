@@ -74,9 +74,7 @@ var mysqlConnection = mysql.createConnection({
 
 
 // ARI connect -----------------------------------------------------------------------------
-//var ariAsterUrl = 'http://localhost:8088';				// localhost
 var ariAsterUrl = 'http://'+ariHost+':8088';	// aster-t
-//var ariAsterUrl = 'http://trend.intellin-tech.ru:8088';		// trend
 
 
 var ari = require('ari-client');
@@ -151,6 +149,8 @@ function clientLoaded(err, client) {
 
 
 // Express my addon: Прокидываю свои контроллеры в переменной res
+
+// res - NO !!! need req !!!
 var connectMyModules = function (req, res, next) {
 	// Нужно для работы API Swagger по протоколу WS
 	//res.wsServerConn = wsServerConn;
@@ -174,28 +174,85 @@ var connectMyModules = function (req, res, next) {
 
 
 
-// Initialize the Swagger middleware ----------------------------------------------------------------------
+
+
+// Initialize the Swagger middleware
 swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
 
-	// CORS - добавляю заголовки
-	app.use(function (req, res, next) {
-	
-		res.setHeader('Access-Control-Allow-Origin', '*');
-		//res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-		res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
-		//res.setHeader('Content-Type', 'application/json');
-		next();
-	});
-	
-	// Пропускаю обработку OPTIONS
-	app.use(function(req, res, next) {
-		if (req.method == 'OPTIONS') {
-			res.end('');
-		}
-		else {
-			next();
-		}
-	});
+
+  // Работаю с модулем connect ======================================
+
+  // Дополняю connect req дополнительными объектами
+  //app.use(function(req, res, next) {
+  //  req.myObj = {
+  //    'request': {
+  //      'module': request,
+  //      'reqOptions': reqOptions,
+  //      'auth': zxAuth
+  //    },
+  //    'aaa': null
+  //  };
+  //  next();
+  //});
+
+  // CORS - добавляю заголовки
+  app.use(function (req, res, next) {
+    //console.log(req);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    // После OAuth2 клиент пробъет запросом OPTION с Access-Control-Request-Headers: authorization  +  Access-Control-Request-Method:GET
+    // Надо сообщить браузеру клиента что мы эту умеем такое
+    res.setHeader('Access-Control-Allow-Headers', 'authorization, token, content-type')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    
+    next();
+  });
+  
+  // Не включаю умную обработку OPTIONS
+  app.use(function(req, res, next) {
+    if (req.method == 'OPTIONS') {
+      res.end();
+    }
+    else {
+      next();
+    }
+  });
+
+  // Если у запроса есть в Header поле Authorization:Bearer значит была пройдена OAuth2
+  app.use(function(req, res, next) {
+    if (req.headers.authorization) {
+      console.log(req.headers.authorization);
+    }
+    next();
+  });
+
+  // Заготовка на отдачу static файла
+  app.use(function (req, res, next) {
+
+    switch (true) {
+
+      case (req.url === '/favion.ico'):
+        res.end()
+        break
+
+      case (req.url === '/miserables.json'):
+        console.log('miserables.json')
+        res.end()
+        break
+
+      default:
+        next();
+        break
+
+    }
+
+  });
+
+
+
+
+  // Работаю с модулем swaggerTools (объект middleware) =============
+  // https://github.com/apigee-127/swagger-tools/blob/master/docs/Middleware.md
 
 	// Interpret Swagger resources and attach metadata to request - must be first in swagger-tools middleware chain
 	app.use(middleware.swaggerMetadata());
@@ -212,13 +269,47 @@ swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
 	// Serve the Swagger documents and Swagger UI
 	app.use(middleware.swaggerUi());
 
+  // Provide the security handlers
+  //app.use(middleware.swaggerSecurity({
+  //  oauth2: function (req, def, scopes, callback) {
+  //    // Do real stuff here
+  //  }
+  //}));
+
+  // AAA на базе Header поля "token"
+  app.use(function (req, res, next) {
+    aaa_handle.checkAuth(req, res, next);
+  });
+
+  // Validate Swagger requests
+  app.use(middleware.swaggerValidator({
+    validateResponse: true
+  }));
+
+  // Route validated requests to appropriate controller
+  app.use(middleware.swaggerRouter(options));
+
+  // Serve the Swagger documents and Swagger UI
+  // https://github.com/apigee-127/swagger-tools/blob/master/middleware/swagger-ui.js
+  app.use(middleware.swaggerUi({
+    apiDocs: '/spec/swagger.json',
+    swaggerUi: '/spec-ui'
+  }));
 
 
-	// Start the server
-	http.createServer(app).listen(serverPort, function () {
-		console.log('REST API Serevr           http://node-t.intellin-tech.ru:%d\n', serverPort);
-		console.log('Swagger-ui                http://node-t.intellin-tech.ru:%d/docs\n', serverPort);
-	});
+
+
+
+
+  // Работаю с модулем http, https ==================================
+  // Start the server
+  http.createServer(app).listen(serverPort, function () {
+    console.log('Swagger http started on port '+serverPort);
+  });
+
+  //https.createServer(httpsOptions, app).listen(httpsServerPort, function () {
+  //  console.log('Swagger https started on port '+httpsServerPort);
+  //});
 });
 
 

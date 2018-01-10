@@ -45,7 +45,7 @@ npm run install-components
 
 
 ### Build
-Компилируем и запускаем live-reload web-сервер - [localhost:8005](http://localhost:8005/)
+Компилируем и запускаем live-reload web-сервер - [192.168.13.97:8005](http://192.168.13.97:8005/)
 
 ```
 gulp

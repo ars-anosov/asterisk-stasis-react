@@ -9,10 +9,10 @@ info:
   title: "call platform api"
   description: |
     openapi-2.0 спецификация:
-    http://asterisk-test.intellin-tech.ru:8080/api-docs
+    http://192.168.16.14.ru:8080/api-docs
     
     Общается с API Asterisk. openapi-1.1 спецификация:
-    http://asterisk-test.intellin-tech.ru:8088/ari/api-docs/resources.json
+    http://192.168.16.14:8088/ari/api-docs/resources.json
     
     ## callPlatform
     Эта фигня запускает автоматический обзвон, АКА Колл-Центр
@@ -27,7 +27,7 @@ info:
 ################################################################################
 #                  Host, Base Path, Schemes and Content Types                  #
 ################################################################################
-host: 'localhost:8004'
+host: '192.168.13.97:8004'
 basePath: /v2api
 schemes:
   - http
