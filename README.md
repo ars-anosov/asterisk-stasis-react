@@ -126,6 +126,39 @@ swg.connect((client, err) => {
 
 Тыкаем компоненты на локальном web-сервере - [192.168.13.97:3000](http://192.168.13.97:3000/)
 
+### 3. Deploy
+Деплой делаем через gulp. В Docker-контейнер будет прокинут весь проект.
+```
+cd asterisk-stasis-react
+
+docker run \
+  --name asterisk-deployer \
+  -v $PWD:/asterisk-deployer \
+  -w /asterisk-deployer \
+  -it \
+  node:8 bash
+```
+
+Дальше все действия внутри контейнера.
+```
+# gulp tools
+npm install -g gulp-cli
+npm install --save gulp rimraf gulp-rsync gulp-if gulp-util
+
+# system rsync
+apt update
+apt install rsync
+
+# содержимое id_rsa.pub вписываем на удаленной машине в authorized_keys
+ssh-keygen
+scp /root/.ssh/id_rsa.pub ars@192.168.28.18:~/
+ssh -t ars@192.168.28.18 'cat id_rsa.pub >> ~/.ssh/authorized_keys'
+
+# Deploy asterisk
+gulp aster:deploy:dev
+```
+Выскочить из контейнера : Ctrl+P+Q
+
 ## Пилим проект
 
 ### asterisk-reactor
