@@ -5,24 +5,13 @@ swagger: "2.0"
 #                              API Information                                 #
 ################################################################################
 info:
-  version: "1.0.3"
-  title: "call platform api"
+  version: "1.0.0"
+  title: "Asterisk stasis REACTOR"
   description: |
-    openapi-2.0 спецификация:
-    http://192.168.16.14.ru:8080/api-docs
-    
-    Общается с API Asterisk. openapi-1.1 спецификация:
-    http://192.168.16.14:8088/ari/api-docs/resources.json
-    
-    ## callPlatform
-    Эта фигня запускает автоматический обзвон, АКА Колл-Центр
+    Обеспечивает работу [React-component](http://192.168.13.97:8005)
+    Открыт для Websocket ws://192.168.13.97:8006. Послушать события можно на [ws_test.html](http://192.168.13.97:8005/ws_test.html)
 
-    ## PBX
-    Тут можно поработать PBX-функционалом платформы
-
-    ## Websocket Server
-    Снабдил API своим Websocket сервером. Работает на порту 8001. 
-    Послушать события можно на [vrf](http://vrf.intellin-tech.ru/aster_test.html).
+    Общается с Asterisk ARI: openapi spec - http://192.168.16.14:8088/ari/api-docs/resources.json
 
 ################################################################################
 #                  Host, Base Path, Schemes and Content Types                  #
@@ -40,10 +29,10 @@ consumes:
 #                                   Tags                                       #
 ################################################################################
 tags:
-  - name: callPlatform
-    description: "Колл-Центр"
   - name: pbx
     description: "Мини-АТС"
+  - name: callPlatform
+    description: "Колл-Центр"
 
 ################################################################################
 #                                    Paths                                     #
@@ -54,7 +43,7 @@ paths:
       tags:
       - "pbx"
       description: "Выводит активные каналы"
-      operationId: "channelsState"
+      operationId: "channels_state"
       produces:
       - "application/json"
       parameters:

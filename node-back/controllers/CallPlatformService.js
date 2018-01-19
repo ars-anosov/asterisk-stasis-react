@@ -10,7 +10,7 @@ exports.originateCallList = function(args, res, next) {
 
   var objToSwag = {};
   objToSwag['application/json'] = [];
-  var ariAsterClient = res.ariAsterClient;    // Коннект к ARI-интерфейсу астериска
+  var ariAsterClient = req.myObj.ariAsterClient;    // Коннект к ARI-интерфейсу астериска
 
   var candidates = {};                            // хэш {endpoints: channelId} и {channelId: endpoints}
   var myBridges = {};                             // хэш {channelId: channelId}

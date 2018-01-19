@@ -10,16 +10,16 @@ var dbHost   = process.argv[5]
 var dbUser   = process.argv[6]
 var dbPass   = process.argv[7]
 
-console.log('Asterisk ARI Host:     '+ariHost)
-console.log('Asterisk ARI User:     '+ariUser)
-console.log('Asterisk ARI Password: '+ariPass)
-console.log()
-console.log('DB Host:     '+dbHost)
-console.log('DB User:     '+dbUser)
-console.log('DB Password: '+dbPass)
+console.log('args:')
+console.log('  Asterisk ARI Host:     '+ariHost)
+console.log('  Asterisk ARI User:     '+ariUser)
+console.log('  Asterisk ARI Password: '+ariPass)
+console.log('  DB Host:               '+dbHost)
+console.log('  DB User:               '+dbUser)
+console.log('  DB Password:           '+dbPass)
 console.log()
 var aaa_handle = require('./sub_modules/aaa_handle')
-
+var myTools = require('./sub_modules/api_tools');
 
 
 
@@ -55,7 +55,7 @@ var swaggerDoc = jsyaml.safeLoad(spec);
 // (+) ==================================== my controllers =============================================
 
 // Это потом подсуну в Express объект res
-//var wsServerConn = {};
+var wsServerConn = {};
 var ariAsterClient = {};
 
 // Это stasis-приложения, которые потом стартую на Asterisk
@@ -63,17 +63,38 @@ var asterFromInternal = require('./aster_from_internal');
 var stasisFromInternal = {};
 var asterFromExternal = require('./aster_from_external');
 var stasisFromExternal = {};
+
+
+
+// MySQL ----------------------------------------------------------------------
 var mysql = require('mysql');
-var mysqlConnection = mysql.createConnection({
+var mysqlConfigAsterisk = {
+  connectionLimit : 3,
 	host     : dbHost,
 	user     : dbUser,
 	password : dbPass,
 	database : 'asterisk'
-});
+};
+var mysqlPoolAsterisk = mysql.createPool(mysqlConfigAsterisk);
+
+myTools.mysqlAction(
+	mysqlPoolAsterisk,
+	"SHOW GLOBAL VARIABLES LIKE 'version%'",
+	function(result) {
+		console.log('|--------------|')
+		console.log('|\x1b[36m DB connected \x1b[0m|');
+		console.log('|--------------|')
+		result.map((row) => {
+			console.log('  '+row.Variable_name+': '+row.Value)
+		})
+	}
+)
 
 
 
-// ARI connect -----------------------------------------------------------------------------
+
+
+// ARI connect ----------------------------------------------------------------
 var ariAsterUrl = 'http://'+ariHost+':8088';	// aster-t
 
 
@@ -85,19 +106,21 @@ function clientLoaded(err, client) {
 		throw err;
 	}
 
-	console.log('\n----------- ARI loaded:');
-	console.log('url: '+client._swagger.url);
-	console.log('basePath: '+client._swagger.basePath);
-	console.log('swaggerVersion: '+client._swagger.swaggerVersion);
-	console.log('apiVersion: '+client._swagger.apiVersion);
+	console.log('|------------------------|')
+	console.log('|\x1b[36m Asterisk ARI connected \x1b[0m|');
+	console.log('|------------------------|')
+	console.log('  url:            '+client._swagger.url);
+	console.log('  basePath:       '+client._swagger.basePath);
+	console.log('  swaggerVersion: '+client._swagger.swaggerVersion);
+	console.log('  apiVersion:     '+client._swagger.apiVersion);
 	
 	// Наполняю глобальную переменную
 	ariAsterClient = client;
 	
 	// ---------------------- Stasis Dialplan ---------------------------------
 	// Стартую новые stasis приложения на астериске
-	stasisFromInternal = new asterFromInternal.Stasis(client, 'from-internal', mysqlConnection);
-	stasisFromExternal = new asterFromExternal.Stasis(client, 'from-external', mysqlConnection);
+	stasisFromInternal = new asterFromInternal.Stasis(client, 'from-internal', mysqlPoolAsterisk);
+	//stasisFromExternal = new asterFromExternal.Stasis(client, 'from-external', mysqlPoolAsterisk);
 
 	// Подписываюсь на события
 	ariAsterClient.on('StasisStart', function stasisStart(event, channel) {
@@ -105,7 +128,7 @@ function clientLoaded(err, client) {
 			stasisFromInternal.stasisStart(event, channel);
 		}
 		if (event.application == 'from-external') {
-			stasisFromExternal.stasisStart(event, channel);
+			//stasisFromExternal.stasisStart(event, channel);
 		}
 	});
 
@@ -114,49 +137,87 @@ function clientLoaded(err, client) {
 			stasisFromInternal.stasisEnd(event, channel);
 		}
 		if (event.application == 'from-external') {
-			stasisFromExternal.stasisEnd(event, channel);
+			//stasisFromExternal.stasisEnd(event, channel);
 		}
 	});
 
 	// Стартую приложяния на Астериске
 	stasisFromInternal.appStart();
-	stasisFromExternal.appStart();
+	//stasisFromExternal.appStart();
 }
 
 
 
 
 // WS Server -----------------------------------------------------------------------------
-// var serverPortWS = 8001;
-// 
-// var ws = require("nodejs-websocket");
-// ws.createServer(function wsConnected(conn) {
-// 	console.log('\n----------- WS new client:');
-// 	console.log(conn.headers)
-// 	
-// 	// Наполняю глобальную переменную
-// 	wsServerConn = conn;
-// 
-// 	// Засовываю wsServerConn в объекы stasis
-// 	stasisFromInternal.wsServerConn = conn;
-// 	stasisFromExternal.wsServerConn = conn;
-// 
-// }).listen(serverPortWS);
-// 
-// console.log('WS server                 ws://node-t.intellin-tech.ru:%d\n', serverPortWS);
+// https://github.com/sitegui/nodejs-websocket/blob/master/samples/chat/server.js
+var serverPortWS = 8006;
+
+var ws = require("nodejs-websocket");
+
+var wsServer = ws.createServer(function (connection) {
+
+	console.log('\n----------- WS new client:');
+	console.log('  connections now: ', wsServer.connections.length)
+	console.log(connection.headers)
+
+	// Наполняю глобальную переменную
+	//wsServerConn = conn;
+
+	// Засовываю wsServerConn в объекы stasis
+	//stasisFromInternal.wsServerConn = conn;
+	//stasisFromExternal.wsServerConn = conn;
+
+	connection.nickname = null
+	connection.on("text", function (str) {
+
+		console.log('WS - text')
+		
+		if (connection.nickname === null) {
+			connection.nickname = str
+			broadcast(str+" entered")
+		} else
+			broadcast("["+connection.nickname+"] "+str)
+	})
+	connection.on("close", function () {
+		
+		console.log('\n----------- WS close:');
+		console.log('  connections now: ', wsServer.connections.length)
+
+		broadcast(connection.nickname+" left")
+		
+	})
+})
+
+wsServer.listen(serverPortWS)
+
+function broadcast(str) {
+	wsServer.connections.forEach(function (connection) {
+		connection.sendText(str)
+	})
+}
+
+console.log('|--------------------------|')
+console.log('|\x1b[36m Websocket server started \x1b[0m|');
+console.log('|--------------------------|')
+console.log('  ws://192.168.13.97:%d', serverPortWS);
+console.log('  connections now: ', wsServer.connections.length)
+console.log()
 
 
 
-
-// Express my addon: Прокидываю свои контроллеры в переменной res
-
-// res - NO !!! need req !!!
+// Express my addon: Прокидываю свои контроллеры в переменной req -------------
 var connectMyModules = function (req, res, next) {
 	// Нужно для работы API Swagger по протоколу WS
 	//res.wsServerConn = wsServerConn;
 
 	// Нужно для работы API Swagger с API-Asterisk
-	res.ariAsterClient = ariAsterClient;
+	req.myObj = {
+		'ariAsterClient':				ariAsterClient,
+		'coreShowChannelsObj':	{},
+		'mysqlPoolAsterisk':		mysqlPoolAsterisk,
+		'aaa':									null
+	};
 	next();
 };
 // (-) ==================================== my controllers =============================================
@@ -169,31 +230,10 @@ var connectMyModules = function (req, res, next) {
 
 
 
-
-
-
-
-
-
-
 // Initialize the Swagger middleware
 swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
 
-
   // Работаю с модулем connect ======================================
-
-  // Дополняю connect req дополнительными объектами
-  //app.use(function(req, res, next) {
-  //  req.myObj = {
-  //    'request': {
-  //      'module': request,
-  //      'reqOptions': reqOptions,
-  //      'auth': zxAuth
-  //    },
-  //    'aaa': null
-  //  };
-  //  next();
-  //});
 
   // CORS - добавляю заголовки
   app.use(function (req, res, next) {
@@ -304,7 +344,12 @@ swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
   // Работаю с модулем http, https ==================================
   // Start the server
   http.createServer(app).listen(serverPort, function () {
-    console.log('Swagger http started on port '+serverPort);
+  	console.log('|---------------------------------|')
+  	console.log('|\x1b[36m Asterisk stasis REACTOR started \x1b[0m|')
+  	console.log('|---------------------------------|')
+    console.log('  Swagger-UI: http://192.168.13.97:'+serverPort+'/spec-ui/')
+    console.log()
+    console.log()
   });
 
   //https.createServer(httpsOptions, app).listen(httpsServerPort, function () {

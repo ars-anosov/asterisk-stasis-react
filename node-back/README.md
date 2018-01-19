@@ -27,6 +27,7 @@ docker run \
   -v $PWD:/asterisk-reactor-node \
   -w /asterisk-reactor-node \
   --publish=8004:8004 \
+  --publish=8006:8006 \
   --env="ARI_HOST=192.168.16.14" \
   --env="ARI_USER=INSERT_USERNAME_HERE" \
   --env="ARI_PASS=INSERT_PASSWORD_HERE" \

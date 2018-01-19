@@ -1,6 +1,6 @@
 'use strict';
 
-exports.channelsState = function(args, res, next) {
+exports.apiAction = function(req, res, next) {
   /**
    * Выводит активные каналы
    *
@@ -8,11 +8,9 @@ exports.channelsState = function(args, res, next) {
    * returns List
    **/
 
-  var ariAsterClient = res.ariAsterClient;
-
   var objToSwag = {};
   objToSwag['application/json'] = [];
-  var ariAsterClient = res.ariAsterClient;    // Коннект к ARI-интерфейсу астериска
+  var ariAsterClient = req.myObj.ariAsterClient;    // Коннект к ARI-интерфейсу астериска
   
   // my logic -----------------------------
   

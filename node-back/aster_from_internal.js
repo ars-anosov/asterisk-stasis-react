@@ -2,9 +2,10 @@
 
 var dateFormat = require('dateformat');
 var datetimeNow = new Date();
+var myTools = require('./sub_modules/api_tools');
 
 
-module.exports.Stasis = function(ariAsterClient, stasisName, mysqlConnection) {
+module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk) {
 
 	// API for Stasis Object
 	var self = this;
@@ -81,30 +82,30 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlConnection) {
 
 
 		function getDataFromMysql(channel, callback /* calback(channel, result) */) {
-			//mysqlConnection.connect();
+
 			if (channel.caller.number == 'sipp') { channel.caller.number = '509'; }		// for sipp testing
-			mysqlConnection.query(
+
+			myTools.mysqlAction(
+				mysqlPoolAsterisk,
 				'SELECT * FROM asterisk_ext WHERE id = '+channel.caller.number,
-				function (err, result) {
-					if (err) { throw err; }
+				function(result) {
 					callback(channel, result)
 				}
-			);
-			//mysqlConnection.end();
+			)
+
 		}
 		
 		function onMysqlDataReady(channel, mysqlResult) {
 
 			var sqlCallId = '';
 
-			//datetimeNow = new Date();
-			mysqlConnection.query(
+			myTools.mysqlAction(
+				mysqlPoolAsterisk,
 				"INSERT INTO asterisk_log_out (ext,aon,dial,time_start,time_end) VALUES ( '"+channel.caller.number+"','"+mysqlResult[0].aon+"','"+channel.dialplan.exten+"','"+dateFormat( datetimeNow, "yyyy-mm-dd HH:MM:ss")+"','"+dateFormat( datetimeNow, "yyyy-mm-dd HH:MM:ss")+"' )",
-				function (error, result, fields) {
-					if (error) throw error;
+				function(result) {
 					sqlCallId = result.insertId;
 				}
-			);
+			)
 
 
 			var origAon = mysqlResult[0].aon;
@@ -193,9 +194,15 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlConnection) {
 			if (!relDirFlag) {
 				relDirFlag = 'Side-A';
 				console.log('Side-A');
-				mysqlConnection.query(
-					"UPDATE asterisk_log_out SET rel_dir='Side-A', cause='000', cause_txt='StasisEnd', time_end='"+dateFormat( datetimeNow, "yyyy-mm-dd HH:MM:ss")+"' WHERE id='"+sqlCallId+"'"
-				);
+
+				myTools.mysqlAction(
+					mysqlPoolAsterisk,
+					"UPDATE asterisk_log_out SET rel_dir='Side-A', cause='000', cause_txt='StasisEnd', time_end='"+dateFormat( datetimeNow, "yyyy-mm-dd HH:MM:ss")+"' WHERE id='"+sqlCallId+"'",
+					function(result) {
+						// nothing
+					}
+				)
+
 			}
 
 			dialed.hangup(function(err) {
@@ -208,9 +215,15 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlConnection) {
 			if (!relDirFlag) {
 				relDirFlag = 'Side-B';
 				console.log('Side-B');
-				mysqlConnection.query(
-					"UPDATE asterisk_log_out SET rel_dir='Side-B', cause='"+event.cause+"', cause_txt='"+event.cause_txt+"', time_end='"+dateFormat( datetimeNow, "yyyy-mm-dd HH:MM:ss")+"' WHERE id='"+sqlCallId+"'"
-				);
+
+				myTools.mysqlAction(
+					mysqlPoolAsterisk,
+					"UPDATE asterisk_log_out SET rel_dir='Side-B', cause='"+event.cause+"', cause_txt='"+event.cause_txt+"', time_end='"+dateFormat( datetimeNow, "yyyy-mm-dd HH:MM:ss")+"' WHERE id='"+sqlCallId+"'",
+					function(result) {
+						// nothing
+					}
+				)
+
 			}
 
 			channel.hangup(function(err) {
