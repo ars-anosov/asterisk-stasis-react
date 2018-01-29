@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 // Modules ------------------------------------------------
 var app           = require('connect')()
@@ -8,10 +8,12 @@ var jsyaml        = require('js-yaml')
 var fs            = require('fs')
 
 var aaa_handle    = require('./sub_modules/aaa_handle')
-var myTools       = require('./sub_modules/api_tools')
+var apiTools      = require('./sub_modules/api_tools')
+var wsTools       = require('./sub_modules/ws_tools')
 
 var asterFromInternal = require('./aster_from_internal')
 var asterFromExternal = require('./aster_from_external')
+
 
 
 // Arguments ---------------------------------------------
@@ -60,8 +62,8 @@ var mysqlConfigAsterisk = {
 // Глобальные переменные, будут асинхронно мутировать. ----
 var wsServer              = {}
 var ariAsterClient        = {}
-var coreShowChannelsObj   = []
 var mysqlPoolAsterisk     = {}
+var coreShowChannelsObj   = []
 
 
 
@@ -71,17 +73,17 @@ var mysqlPoolAsterisk     = {}
 // |--------------|
 // |     MySQL    |
 // |--------------|
-var mysql = require('mysql');
+var mysql = require('mysql')
 
 // Мутирую глобальную переменную
-mysqlPoolAsterisk = mysql.createPool(mysqlConfigAsterisk);
+mysqlPoolAsterisk = mysql.createPool(mysqlConfigAsterisk)
 
-myTools.mysqlAction(
+apiTools.mysqlAction(
   mysqlPoolAsterisk,
   "SHOW GLOBAL VARIABLES LIKE 'version%'",
   function(result) {
     console.log('|--------------|')
-    console.log('|\x1b[36m DB connected \x1b[0m|');
+    console.log('|\x1b[36m DB connected \x1b[0m|')
     console.log('|--------------|')
     result.map((row) => {
       console.log('  '+row.Variable_name+': '+row.Value)
@@ -94,56 +96,85 @@ myTools.mysqlAction(
 // |------------------------|
 // |      Asterisk ARI      |
 // |------------------------|
-var ari = require('ari-client');
+// https://github.com/asterisk/node-ari-client
+var ari = require('ari-client')
 
-ari.connect('http://'+ariHost+':8088', ariUser, ariPass, clientLoaded);
+ari.connect('http://'+ariHost+':8088', ariUser, ariPass, clientLoaded)
 
 function clientLoaded(err, client) {
   if (err) {
-    throw err;
+    throw err
   }
 
   // Мутирую глобальную переменную
-  ariAsterClient = client;
+  ariAsterClient = client
   console.log('|------------------------|')
-  console.log('|\x1b[36m Asterisk ARI connected \x1b[0m|');
+  console.log('|\x1b[36m Asterisk ARI connected \x1b[0m|')
   console.log('|------------------------|')
-  console.log('  url:            '+client._swagger.url);
-  console.log('  basePath:       '+client._swagger.basePath);
-  console.log('  swaggerVersion: '+client._swagger.swaggerVersion);
-  console.log('  apiVersion:     '+client._swagger.apiVersion);
+  console.log('  url:            '+client._swagger.url)
+  console.log('  basePath:       '+client._swagger.basePath)
+  console.log('  swaggerVersion: '+client._swagger.swaggerVersion)
+  console.log('  apiVersion:     '+client._swagger.apiVersion)
 
-  var stasisFromInternal = new asterFromInternal.Stasis(client, 'from-internal', mysqlPoolAsterisk);
-  //var stasisFromExternal = new asterFromExternal.Stasis(client, 'from-external', mysqlPoolAsterisk);
+  var stasisFromInternal = new asterFromInternal.Stasis(client, 'from-internal', mysqlPoolAsterisk, wsServer)
+  //var stasisFromExternal = new asterFromExternal.Stasis(client, 'from-external', mysqlPoolAsterisk, wsServer)
 
   // Подписываюсь на события
   ariAsterClient.on('StasisStart', function stasisStart(event, channel) {
     if (event.application == 'from-internal') {
-      stasisFromInternal.stasisStart(event, channel);
+      stasisFromInternal.stasisStart(event, channel)
     }
     if (event.application == 'from-external') {
-      //stasisFromExternal.stasisStart(event, channel);
+      //stasisFromExternal.stasisStart(event, channel)
     }
-  });
+  })
 
   ariAsterClient.on('StasisEnd', function stasisEnd(event, channel) {
     if (event.application == 'from-internal') {
-      stasisFromInternal.stasisEnd(event, channel);
+      stasisFromInternal.stasisEnd(event, channel)
     }
     if (event.application == 'from-external') {
-      //stasisFromExternal.stasisEnd(event, channel);
+      //stasisFromExternal.stasisEnd(event, channel)
     }
-  });
+  })
 
   // Мутирую глобальную переменную coreShowChannelsObj
-  //setInterval(
-  //() => {
-  //  coreShowChannelsObj = coreShowChannelsObjGet(namiAction);
-  //}, 1000)
+  setInterval(
+  () => {
+    if (ariAsterClient) {
+      ariAsterClient.channels.list(function(err, channels) {
+        channels.forEach(function(channel) {
+          var direction = '';
+          
+          // Пытаюсь привести к формату NAMI.
+          coreShowChannelsObj.push({
+            'channel':          channel.name,
+            uniqueid:           channel.id,
+            context:            channel.dialplan.context,
+            extension:          channel.dialplan.exten,
+            priority:           channel.dialplan.priority,
+            channelstate:       channel.state,
+            channelstatedesc:   channel.state,
+            application:        '',
+            applicationdata:    '',
+            calleridnum:        channel.caller.number,
+            calleridname:       channel.caller.name,
+            connectedlinenum:   channel.connected.number,
+            connectedlinename:  channel.connected.name,
+            duration:           '',
+            accountcode:        '',
+            bridgedchannel:     '',
+            bridgeduniqueid:    ''
+          })
+
+        })
+      })
+    }
+  }, 1000)
 
   // Стартую приложяния на Астериске
-  stasisFromInternal.appStart();
-  //stasisFromExternal.appStart();
+  stasisFromInternal.appStart()
+  //stasisFromExternal.appStart()
 }
 
 
@@ -152,54 +183,29 @@ function clientLoaded(err, client) {
 // |     Websocket server     |
 // |--------------------------|
 // https://github.com/sitegui/nodejs-websocket/blob/master/samples/chat/server.js
-var ws = require("nodejs-websocket");
+var ws = require("nodejs-websocket")
 
-// Мутирую глобальную переменную
+// Мутирую глобальную переменную при каждом новом коннекте
 wsServer = ws.createServer(function (connection) {
-
-  connection.nickname = null
-
-  // Подписываюсь на события
-  connection.on("text", function (str) {
-    console.log('WS - text')
-    
-    if (connection.nickname === null) {
-      connection.nickname = str
-      wsBroadcast(str+" entered")
-    }
-    else {
-      wsBroadcast("["+connection.nickname+"] "+str)
-    }
-  })
+  
+  wsTools.wsNewConn(wsServer, connection)
   
   connection.on("close", function () {
-    console.log('\n----------- WS close:');
-    console.log('  connections now: ', wsServer.connections.length)
-
-    wsBroadcast(connection.nickname+" left")
+    wsTools.wsCloseConn(wsServer, connection)
+    //wsBroadcast(connection.nickname+" left")
   })
 
 })
 
 wsServer.listen(serverPortWS)
 console.log('|--------------------------|')
-console.log('|\x1b[36m Websocket server started \x1b[0m|');
+console.log('|\x1b[36m Websocket server started \x1b[0m|')
 console.log('|--------------------------|')
-console.log('  ws://192.168.13.97:%d', serverPortWS);
+console.log('  ws://192.168.13.97:%d', serverPortWS)
 console.log('  connections now: ', wsServer.connections.length)
 console.log()
 
-function wsBroadcast(str) {
-  wsServer.connections.forEach(function (connection) {
-    connection.sendText(str)
-  })
-}
 
-function wsNewConn(connection) {
-  console.log('\n----------- WS new client:');
-  console.log('  connections now: ', wsServer.connections.length)
-  console.log(connection.headers)
-}
 
 
 
@@ -211,49 +217,46 @@ function wsNewConn(connection) {
 // ================================================================================================
 
 // Обрабатываю HTTP Headers
-var httpPreActions = function(req, res, next) {
-  
-  // CORS - добавляю заголовки
-  app.use(function (req, res, next) {
-    //console.log(req);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    // После OAuth2 клиент пробъет запросом OPTION с Access-Control-Request-Headers: authorization  +  Access-Control-Request-Method:GET
-    // Надо сообщить браузеру клиента что мы эту умеем такое
-    res.setHeader('Access-Control-Allow-Headers', 'authorization, token, content-type')
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+
+// CORS - добавляю заголовки
+var httpAccessControl = function (req, res, next) {
+  //console.log(req)
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  // После OAuth2 клиент пробъет запросом OPTION с Access-Control-Request-Headers: authorization  +  Access-Control-Request-Method:GET
+  // Надо сообщить браузеру клиента что мы эту умеем такое
+  res.setHeader('Access-Control-Allow-Headers', 'authorization, token, content-type')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  next()
+}
+
+// Не включаю умную обработку OPTIONS
+var httpOptions = function(req, res, next) {
+  if (req.method == 'OPTIONS') {
+    res.end()
+  }
+  else {
     next()
-  })
-  
-  // Не включаю умную обработку OPTIONS
-  app.use(function(req, res, next) {
-    if (req.method == 'OPTIONS') {
+  }
+}
+
+// Если у запроса есть в Header поле Authorization:Bearer значит была пройдена OAuth2
+var httpOaut2 = function(req, res, next) {
+  if (req.headers.authorization) {
+    console.log(req.headers.authorization)
+  }
+  next()
+}
+
+// Заготовка на отдачу static файла
+var httpStaticFiles = function (req, res, next) {
+  switch (true) {
+    case (req.url === '/favion.ico'):
       res.end()
-    }
-    else {
+      break
+    default:
       next()
-    }
-  })
-
-  // Если у запроса есть в Header поле Authorization:Bearer значит была пройдена OAuth2
-  app.use(function(req, res, next) {
-    if (req.headers.authorization) {
-      console.log(req.headers.authorization);
-    }
-    next()
-  })
-
-  // Заготовка на отдачу static файла
-  app.use(function (req, res, next) {
-    switch (true) {
-      case (req.url === '/favion.ico'):
-        res.end()
-        break
-      default:
-        next()
-        break
-    }
-  })
-
+      break
+  }
 }
 
 // Наполнение req.myObj объекта мутирующими глобальными объектами
@@ -270,6 +273,9 @@ var connectMyModules = function(req, res, next) {
 
 
 
+
+
+
 // ================================================================================================
 // =                                  [middleware] obj                                            =
 // ================================================================================================
@@ -279,40 +285,41 @@ swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
   // https://github.com/apigee-127/swagger-tools/blob/master/docs/Middleware.md
 
   // Interpret Swagger resources and attach metadata to request - must be first in swagger-tools middleware chain
-  app.use(middleware.swaggerMetadata());
+  app.use(middleware.swaggerMetadata())
 
   // Правильная реакция на всякое от HTTP
-  app.use(httpPreActions);
+  app.use(httpAccessControl)
+  app.use(httpOptions)
+  app.use(httpOaut2)
+  app.use(httpStaticFiles)
   
   // Прокидываю свои контроллеры в переменной req
-  app.use(connectMyModules);
+  app.use(connectMyModules)
 
   // AAA на базе HTTP Header "token"
-  app.use(function (req, res, next) {
-    aaa_handle.checkAuth(req, res, next);
-  });
+  app.use(aaa_handle.checkAuth)
 
   // AAA на базе oauth2
   //app.use(middleware.swaggerSecurity({
   //  oauth2: function (req, def, scopes, callback) {
   //    // Do real stuff here
   //  }
-  //}));
+  //}))
 
   // Validate Swagger requests
   app.use(middleware.swaggerValidator({
     validateResponse: true
-  }));
+  }))
 
   // Route validated requests to appropriate controller
-  app.use(middleware.swaggerRouter(options));
+  app.use(middleware.swaggerRouter(options))
 
   // Serve the Swagger documents and Swagger UI
   // https://github.com/apigee-127/swagger-tools/blob/master/middleware/swagger-ui.js
   app.use(middleware.swaggerUi({
     apiDocs: '/spec/swagger.json',
     swaggerUi: '/spec-ui'
-  }));
+  }))
 
 
 
@@ -328,9 +335,9 @@ swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
     console.log('  Swagger-UI: http://192.168.13.97:'+serverPort+'/spec-ui/')
     console.log()
     console.log()
-  });
+  })
 
   //https.createServer(httpsOptions, app).listen(httpsServerPort, function () {
-  //  console.log('Swagger https started on port '+httpsServerPort);
-  //});
-});
+  //  console.log('Swagger https started on port '+httpsServerPort)
+  //})
+})

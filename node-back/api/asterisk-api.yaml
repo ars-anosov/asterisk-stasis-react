@@ -9,9 +9,10 @@ info:
   title: "Asterisk stasis REACTOR"
   description: |
     Обеспечивает работу [React-component](http://192.168.13.97:8005)
-    Открыт для Websocket ws://192.168.13.97:8006. Послушать события можно на [ws_test.html](http://192.168.13.97:8005/ws_test.html)
+    Открыт для Websocket ws://192.168.13.97:8006
 
     Общается с Asterisk ARI: openapi spec - http://192.168.16.14:8088/ari/api-docs/resources.json
+    Общается с MySQL: 192.168.26.17
 
 ################################################################################
 #                  Host, Base Path, Schemes and Content Types                  #
@@ -47,6 +48,11 @@ paths:
       produces:
       - "application/json"
       parameters:
+      - name: token
+        in: header
+        description: token
+        required: true
+        type: string
       - name: "direction"
         in: "query"
         description: "Направление вызова (in/out)"
@@ -54,11 +60,17 @@ paths:
         type: "string"
       responses:
         200:
-          description: "распечатка активных каналов"
+          description: "активные каналы"
           schema:
             type: "array"
             items:
-              $ref: "#/definitions/channels"
+              $ref: "#/definitions/platform_channels"
+        202:
+          description: "пусто"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/dummy"
         default:
           description: "unexpected error"
           schema:
@@ -86,8 +98,13 @@ paths:
       produces:
       - "application/json"
       parameters:
-      - in: "body"
-        name: "originateParam"
+      - name: token
+        in: header
+        description: token
+        required: true
+        type: string
+      - name: "originateParam"
+        in: "body"
         description: "JSON объект содержащий [массив-endpoint], context, [массив-exten]"
         required: true
         schema:
@@ -139,6 +156,51 @@ definitions:
     type: "object"
     properties:
       status:
+        type: "string"
+  platform_channels:
+    type: "object"
+    properties:
+      sip_tg:
+        type: "string"
+      application:
+        type: "string"
+      context:
+        type: "string"
+      extension:
+        type: "string"
+      channelstatedesc:
+        type: "string"
+      calleridnum:
+        type: "string"
+      connectedlinenum:
+        type: "string"
+      duration:
+        type: "string"
+      b_sip_tg:
+        type: "string"
+      b_application:
+        type: "string"
+      b_context:
+        type: "string"
+      b_extension:
+        type: "string"
+      b_channelstatedesc:
+        type: "string"
+      b_calleridnum:
+        type: "string"
+      b_connectedlinenum:
+        type: "string"
+      b_duration:
+        type: "string"
+      call_direction:
+        type: "string"
+  dummy:
+    type: "object"
+    properties:
+      code:
+        type: "integer"
+        format: "int32"
+      message:
         type: "string"
   errorModel:
     type: "object"

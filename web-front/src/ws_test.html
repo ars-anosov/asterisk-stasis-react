@@ -194,7 +194,10 @@ socket.onclose = function(event) {
 
 socket.onmessage = function(event) {
 
-	wsResData = JSON.parse(event.data);
+  var wsResData = {}
+	if (event.data) {
+    wsResData = JSON.parse(event.data)
+  }
 
 	
 

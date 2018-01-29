@@ -1,17 +1,16 @@
 'use strict';
 
-var dateFormat = require('dateformat');
-var datetimeNow = new Date();
-var myTools = require('./sub_modules/api_tools');
+var dateFormat		= require('dateformat');
+var datetimeNow		= new Date();
+var apiTools			= require('./sub_modules/api_tools');
+var wsTools				= require('./sub_modules/ws_tools');
 
 
-module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk) {
+module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk, wsServer) {
 
 	// API for Stasis Object
 	var self = this;
 	
-	// Этот объект наполнится из index.js когда там стартует WS-Server
-	this.wsServerConn = {};
 	
 	// Стартую новое приложение на астериске
 	this.appStart = function() {
@@ -24,19 +23,25 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk) 
 
 	// (+) stasisStart ------------------------------------------------------------------
 	this.stasisStart = function (event, channel) {
-		if (self.wsServerConn.headers) { self.wsServerConn.sendText( JSON.stringify(event || {}, null, 2) ); }
+
+		// channel - test All events
+		channel.on('ChannelStateChange', function(event, channel) {
+			wsTools.wsBroadcast(wsServer,  JSON.stringify(event || {}, null, 2) )
+		});
+
+		wsTools.wsBroadcast(wsServer,  JSON.stringify(event || {}, null, 2) )
 		
 		// channel - first channel
 		// dialed - second channel
 		
 		if (event.args[0] === 'leg2') {
-			console.log('stasisStart (2) ----------------------> 2nd leg dialed. (channel: '+channel.id+' '+channel.name+')');
+			wsTools.wsBroadcast(wsServer, '{"type": "___debugMsg", "msg": "stasisStart (2) ----------------------> 2nd leg dialed. (channel: '+channel.id+' '+channel.name+')"}')
 		}
 		else if (channel.dialplan.exten === 'h') {
-			console.log('stasisStart (3) ----------------------> Hangup request. (channel: '+channel.id+' '+channel.name+')');
+			wsTools.wsBroadcast(wsServer, '{"type": "___debugMsg", "msg": "stasisStart (3) ----------------------> Hangup request. (channel: '+channel.id+' '+channel.name+')"}')
 		}
 		else {
-			console.log('stasisStart (1) ----------------------> Create 2nd leg. (channel: '+channel.id+' '+channel.name+')');
+			wsTools.wsBroadcast(wsServer, '{"type": "___debugMsg", "msg": "stasisStart (1) ----------------------> Create 2nd leg. (channel: '+channel.id+' '+channel.name+')"}')
 			// построить второе плече ( dialed )
 			
 			//playbackFile(channel, 'sound:pls-hold-while-try', onPlaybackFinished);
@@ -53,11 +58,11 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk) 
 			var playback = ariAsterClient.Playback();
 
 			playback.on('PlaybackStarted', function (event, playback) {
-				if (self.wsServerConn.headers) { self.wsServerConn.sendText( JSON.stringify(event || {}, null, 2) ); }
+				wsTools.wsBroadcast(wsServer,  JSON.stringify(event || {}, null, 2) )
 			});
 
 			playback.on('PlaybackFinished', function (event, playback) {
-				if (self.wsServerConn.headers) { self.wsServerConn.sendText( JSON.stringify(event || {}, null, 2) ); }
+				wsTools.wsBroadcast(wsServer,  JSON.stringify(event || {}, null, 2) )
 			});
 
 			channel.play(
@@ -85,7 +90,7 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk) 
 
 			if (channel.caller.number == 'sipp') { channel.caller.number = '509'; }		// for sipp testing
 
-			myTools.mysqlAction(
+			apiTools.mysqlAction(
 				mysqlPoolAsterisk,
 				'SELECT * FROM asterisk_ext WHERE id = '+channel.caller.number,
 				function(result) {
@@ -99,7 +104,7 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk) 
 
 			var sqlCallId = '';
 
-			myTools.mysqlAction(
+			apiTools.mysqlAction(
 				mysqlPoolAsterisk,
 				"INSERT INTO asterisk_log_out (ext,aon,dial,time_start,time_end) VALUES ( '"+channel.caller.number+"','"+mysqlResult[0].aon+"','"+channel.dialplan.exten+"','"+dateFormat( datetimeNow, "yyyy-mm-dd HH:MM:ss")+"','"+dateFormat( datetimeNow, "yyyy-mm-dd HH:MM:ss")+"' )",
 				function(result) {
@@ -142,12 +147,13 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk) 
 
 			// channel - hangup			
 			channel.on('StasisEnd', function(event, channel) {
+				wsTools.wsBroadcast(wsServer,  JSON.stringify(event || {}, null, 2) )
 				hangupDialed(channel, dialed, event, sqlCallId);
 			});
 
 			// dialled - hangup
 			dialed.on('ChannelDestroyed', function(event, dialed) {
-				if (self.wsServerConn.headers) { self.wsServerConn.sendText( JSON.stringify(event || {}, null, 2) ); }
+				wsTools.wsBroadcast(wsServer,  JSON.stringify(event || {}, null, 2) )
 				hangupOriginal(channel, dialed, event, sqlCallId);
 			});
 
@@ -195,7 +201,7 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk) 
 				relDirFlag = 'Side-A';
 				console.log('Side-A');
 
-				myTools.mysqlAction(
+				apiTools.mysqlAction(
 					mysqlPoolAsterisk,
 					"UPDATE asterisk_log_out SET rel_dir='Side-A', cause='000', cause_txt='StasisEnd', time_end='"+dateFormat( datetimeNow, "yyyy-mm-dd HH:MM:ss")+"' WHERE id='"+sqlCallId+"'",
 					function(result) {
@@ -216,7 +222,7 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk) 
 				relDirFlag = 'Side-B';
 				console.log('Side-B');
 
-				myTools.mysqlAction(
+				apiTools.mysqlAction(
 					mysqlPoolAsterisk,
 					"UPDATE asterisk_log_out SET rel_dir='Side-B', cause='"+event.cause+"', cause_txt='"+event.cause_txt+"', time_end='"+dateFormat( datetimeNow, "yyyy-mm-dd HH:MM:ss")+"' WHERE id='"+sqlCallId+"'",
 					function(result) {
@@ -282,7 +288,7 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk) 
 
 	// (+) stasisEnd --------------------------------------------------------------------
 	this.stasisEnd = function (event, channel) {
-		if (self.wsServerConn.headers) { self.wsServerConn.sendText( JSON.stringify(event || {}, null, 2) ); }
+		wsTools.wsBroadcast(wsServer,  JSON.stringify(event || {}, null, 2) )
 	}
 	// (-) stasisEnd --------------------------------------------------------------------
 

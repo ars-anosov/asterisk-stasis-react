@@ -11,7 +11,8 @@ export class HZ123 extends React.Component {
       inputHostName:    this.props.inputHostName || '',
       selectHostGroup:  this.props.selectHostGroup || '',
       showResult:       true,
-      searchResult:     null
+      searchResult:     null,
+      wsLog:            ''
     }
 
     this.handleChangeInput    = this.handleChangeInput.bind(this)
@@ -93,6 +94,32 @@ export class HZ123 extends React.Component {
     //  //err
     //})
 
+
+
+
+    var socket = new WebSocket('ws://192.168.13.97:8006');
+    
+    socket.onopen = function() {
+      console.log("Соединение установлено.");
+    };
+    
+    socket.onclose = function(event) {
+      if (event.wasClean) {
+        console.log('Соединение закрыто чисто');
+      } else {
+        console.log('Обрыв соединения'); // например, "убит" процесс сервера
+      }
+      console.log('Код: ' + event.code + ' причина: ' + event.reason);
+    };
+    
+    var self = this
+    socket.onmessage = function(event) {
+      console.log(event.data)
+      //self.setState({wsLog: self.state.wsLog + '\n' + event.data})
+      self.setState({wsLog: event.data})
+    }
+
+
   }
 
 
@@ -154,6 +181,8 @@ export class HZ123 extends React.Component {
       <button className='add-bttn' onClick={this.handleClkAction} value='add'>Добавить</button>
 
       <div className={this.state.showResult ? '' : 'display-none'}>{this.state.searchResult}</div>
+
+      <pre>log: {this.state.wsLog}</pre>
 
     </div>
 
