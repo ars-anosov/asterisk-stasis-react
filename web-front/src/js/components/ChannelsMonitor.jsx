@@ -73,7 +73,9 @@ export class ChannelsMonitor extends React.Component {
         //    console.log(res.body)
         //  }
         //})
-        groupsObj[0] = {'name': 'group0', 'color': color(0)}
+        groupsObj['from-internal']  = {'name': 'Исходящие', 'color': color(0)}
+        groupsObj['from-external']  = {'name': 'Входящие', 'color': color(1)}
+        groupsObj['no_context']     = {'name': 'core', 'color': color(2)}
         drawLinks(groupsObj)
       }
 

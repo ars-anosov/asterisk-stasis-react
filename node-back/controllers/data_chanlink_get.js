@@ -6,26 +6,38 @@ exports.apiAction = function(req, res, next) {
 
   var args                = req.swagger.params
 
-  var respObj = {'nodes': [], 'links': []}
+  var respObj = {
+    "nodes": [],
+    "links": []
+  }
+
   var chanObj = req.myObj.PlatformChannelsNow.channels
   var brObj = req.myObj.PlatformChannelsNow.bridges
+  var nodesObj = {}
 
   if (args.layer.value) {
-    console.log('layer:' + args.layer.value)
+    //console.log('layer:' + args.layer.value)
   }
 
   for (let key in chanObj) {
-    respObj.nodes.push({
-      'id':               chanObj[key].name,
-      'group':            0
-    })
+    let idCustom = chanObj[key].dialplan.context +': '+ chanObj[key].name.substr(6, chanObj[key].name.length - 6 - 9) +' -> '+ chanObj[key].dialplan.exten
+    if (!(nodesObj[idCustom] === 1)) {
+      respObj.nodes.push({
+        'id':               idCustom,
+        'group':            chanObj[key].dialplan.context,
+        'desc':             'test desc'
+      })
+      nodesObj[idCustom] = 1
+    }
   }
 
   for (let key in brObj) {
+    let idCustom0 = brObj[key].channels[0].dialplan.context +': '+ brObj[key].channels[0].name.substr(6, brObj[key].channels[0].name.length - 6 - 9) + ' -> '+ brObj[key].channels[0].dialplan.exten
+    let idCustom1 = brObj[key].channels[1].dialplan.context +': '+ brObj[key].channels[1].name.substr(6, brObj[key].channels[1].name.length - 6 - 9) + ' -> '+ brObj[key].channels[1].dialplan.exten
     respObj.links.push({
       'value':            1,
-      'source':           brObj[key].channels[0].name,
-      'target':           brObj[key].channels[1].name
+      'source':           idCustom0,
+      'target':           idCustom1
     })
   }
 

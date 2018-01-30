@@ -220,10 +220,10 @@ definitions:
           properties:
             id:
               type: "string"
-            leg1:
-              type: "string"
-            leg2:
-              type: "string"
+            channels:
+              type: "array"
+              items:
+                type: "string"
 
 # chanlinks -------------------------------------------------------------------
   chanlinks:
@@ -237,7 +237,9 @@ definitions:
             id:
               type: string
             group:
-              type: integer
+              type: string
+            desc:
+              type: string
       links:
         type: array
         items:

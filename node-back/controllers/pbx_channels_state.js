@@ -6,7 +6,7 @@ exports.apiAction = function(req, res, next) {
 
   var respObj = {'channels': [], 'bridges': []}
   var chanObj = req.myObj.PlatformChannelsNow.channels
-  var brObj = req.myObj.PlatformChannelsNow.bridges
+  var brObj   = req.myObj.PlatformChannelsNow.bridges
 
   for (let key in chanObj) {
     respObj.channels.push({
@@ -21,11 +21,18 @@ exports.apiAction = function(req, res, next) {
   }
 
   for (let key in brObj) {
+
+    let brCahanArr = []
+    brObj[key].channels.forEach( (row) => {
+      brCahanArr.push(row.id)
+    })
+    
     respObj.bridges.push({
       'id':               brObj[key].id,
-      'leg1':             brObj[key].channels[0].id,
-      'leg2':             brObj[key].channels[1].id
+      'channels':         brCahanArr
     })
+
+
   }
 
   apiTools.apiResJson(res, respObj, 200);
