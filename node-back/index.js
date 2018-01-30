@@ -8,7 +8,9 @@ var jsyaml        = require('js-yaml')
 var fs            = require('fs')
 
 var aaa_handle    = require('./sub_modules/aaa_handle')
+var mysqlTools    = require('./sub_modules/mysql_tools')
 var apiTools      = require('./sub_modules/api_tools')
+var ariTools      = require('./sub_modules/ari_tools')
 var wsTools       = require('./sub_modules/ws_tools')
 
 var asterFromInternal = require('./aster_from_internal')
@@ -63,7 +65,7 @@ var mysqlConfigAsterisk = {
 var wsServer              = {}
 var ariAsterClient        = {}
 var mysqlPoolAsterisk     = {}
-var coreShowChannelsObj   = []
+var PlatformChannelsNow   = {'channels': {}, 'bridges': {}}
 
 
 
@@ -78,7 +80,7 @@ var mysql = require('mysql')
 // Мутирую глобальную переменную
 mysqlPoolAsterisk = mysql.createPool(mysqlConfigAsterisk)
 
-apiTools.mysqlAction(
+mysqlTools.mysqlAction(
   mysqlPoolAsterisk,
   "SHOW GLOBAL VARIABLES LIKE 'version%'",
   function(result) {
@@ -116,6 +118,16 @@ function clientLoaded(err, client) {
   console.log('  swaggerVersion: '+client._swagger.swaggerVersion)
   console.log('  apiVersion:     '+client._swagger.apiVersion)
 
+
+
+  // Мутирую глобальную переменную PlatformChannelsNow
+  setInterval(
+  () => {
+    ariTools.PlatformChannels(ariAsterClient, (chanList, brList) => {
+      PlatformChannelsNow = {'channels': chanList, 'bridges': brList}
+    })
+  }, 1000)
+
   var stasisFromInternal = new asterFromInternal.Stasis(client, 'from-internal', mysqlPoolAsterisk, wsServer)
   //var stasisFromExternal = new asterFromExternal.Stasis(client, 'from-external', mysqlPoolAsterisk, wsServer)
 
@@ -137,40 +149,6 @@ function clientLoaded(err, client) {
       //stasisFromExternal.stasisEnd(event, channel)
     }
   })
-
-  // Мутирую глобальную переменную coreShowChannelsObj
-  setInterval(
-  () => {
-    if (ariAsterClient) {
-      ariAsterClient.channels.list(function(err, channels) {
-        channels.forEach(function(channel) {
-          var direction = '';
-          
-          // Пытаюсь привести к формату NAMI.
-          coreShowChannelsObj.push({
-            'channel':          channel.name,
-            uniqueid:           channel.id,
-            context:            channel.dialplan.context,
-            extension:          channel.dialplan.exten,
-            priority:           channel.dialplan.priority,
-            channelstate:       channel.state,
-            channelstatedesc:   channel.state,
-            application:        '',
-            applicationdata:    '',
-            calleridnum:        channel.caller.number,
-            calleridname:       channel.caller.name,
-            connectedlinenum:   channel.connected.number,
-            connectedlinename:  channel.connected.name,
-            duration:           '',
-            accountcode:        '',
-            bridgedchannel:     '',
-            bridgeduniqueid:    ''
-          })
-
-        })
-      })
-    }
-  }, 1000)
 
   // Стартую приложяния на Астериске
   stasisFromInternal.appStart()
@@ -264,7 +242,7 @@ var connectMyModules = function(req, res, next) {
   req.myObj = {
     'ariAsterClient':       ariAsterClient,
     'wsServer':             wsServer,
-    'coreShowChannelsObj':  coreShowChannelsObj,
+    'PlatformChannelsNow':  PlatformChannelsNow,
     'mysqlPoolAsterisk':    mysqlPoolAsterisk,
     'aaa':                  null
   }

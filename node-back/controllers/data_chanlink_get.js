@@ -4,27 +4,28 @@ var apiTools = require('../sub_modules/api_tools')
 
 exports.apiAction = function(req, res, next) {
 
-  var respObj = {'channels': [], 'bridges': []}
+  var args                = req.swagger.params
+
+  var respObj = {'nodes': [], 'links': []}
   var chanObj = req.myObj.PlatformChannelsNow.channels
   var brObj = req.myObj.PlatformChannelsNow.bridges
 
+  if (args.layer.value) {
+    console.log('layer:' + args.layer.value)
+  }
+
   for (let key in chanObj) {
-    respObj.channels.push({
-      'id':               chanObj[key].id,
-      'name':             chanObj[key].name,
-      'state':            chanObj[key].state,
-      'creationtime':     chanObj[key].creationtime,
-      'dialplan_context': chanObj[key].dialplan.context,
-      'dialplan_exten':   chanObj[key].dialplan.exten,
-      'caller_number':    chanObj[key].caller.number
+    respObj.nodes.push({
+      'id':               chanObj[key].name,
+      'group':            0
     })
   }
 
   for (let key in brObj) {
-    respObj.bridges.push({
-      'id':               brObj[key].id,
-      'leg1':             brObj[key].channels[0].id,
-      'leg2':             brObj[key].channels[1].id
+    respObj.links.push({
+      'value':            1,
+      'source':           brObj[key].channels[0].name,
+      'target':           brObj[key].channels[1].name
     })
   }
 

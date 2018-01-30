@@ -1,12 +1,16 @@
 'use strict';
 
-
-
 var wsBroadcast = function (wsServer, str) {
   wsServer.connections.forEach(function (connection) {
     connection.sendText(str)
   })
 }
+
+
+
+
+
+
 
 
 
@@ -32,15 +36,33 @@ var wsNewConn = function (wsServer, connection) {
 
 
 
+
+
+
+
+
+
 var wsCloseConn = function (wsServer, connection) {
   wsBroadcast(wsServer, '{"type": "___debugMsg", "msg": "WS close connection", "connectionsNow": '+wsServer.connections.length+'}')
 }
 
 
 
+
+
+
+
+
+
 var onText = function(connection) {
 	console.log('WS - text')
 }
+
+
+
+
+
+
 
 
 

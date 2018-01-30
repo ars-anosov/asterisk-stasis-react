@@ -3,6 +3,7 @@
 var dateFormat		= require('dateformat');
 var datetimeNow		= new Date();
 var apiTools			= require('./sub_modules/api_tools');
+var mysqlTools		= require('./sub_modules/mysql_tools');
 var wsTools				= require('./sub_modules/ws_tools');
 
 
@@ -90,7 +91,7 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk, 
 
 			if (channel.caller.number == 'sipp') { channel.caller.number = '509'; }		// for sipp testing
 
-			apiTools.mysqlAction(
+			mysqlTools.mysqlAction(
 				mysqlPoolAsterisk,
 				'SELECT * FROM asterisk_ext WHERE id = '+channel.caller.number,
 				function(result) {
@@ -104,7 +105,7 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk, 
 
 			var sqlCallId = '';
 
-			apiTools.mysqlAction(
+			mysqlTools.mysqlAction(
 				mysqlPoolAsterisk,
 				"INSERT INTO asterisk_log_out (ext,aon,dial,time_start,time_end) VALUES ( '"+channel.caller.number+"','"+mysqlResult[0].aon+"','"+channel.dialplan.exten+"','"+dateFormat( datetimeNow, "yyyy-mm-dd HH:MM:ss")+"','"+dateFormat( datetimeNow, "yyyy-mm-dd HH:MM:ss")+"' )",
 				function(result) {
@@ -201,7 +202,7 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk, 
 				relDirFlag = 'Side-A';
 				console.log('Side-A');
 
-				apiTools.mysqlAction(
+				mysqlTools.mysqlAction(
 					mysqlPoolAsterisk,
 					"UPDATE asterisk_log_out SET rel_dir='Side-A', cause='000', cause_txt='StasisEnd', time_end='"+dateFormat( datetimeNow, "yyyy-mm-dd HH:MM:ss")+"' WHERE id='"+sqlCallId+"'",
 					function(result) {
@@ -222,7 +223,7 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk, 
 				relDirFlag = 'Side-B';
 				console.log('Side-B');
 
-				apiTools.mysqlAction(
+				mysqlTools.mysqlAction(
 					mysqlPoolAsterisk,
 					"UPDATE asterisk_log_out SET rel_dir='Side-B', cause='"+event.cause+"', cause_txt='"+event.cause_txt+"', time_end='"+dateFormat( datetimeNow, "yyyy-mm-dd HH:MM:ss")+"' WHERE id='"+sqlCallId+"'",
 					function(result) {

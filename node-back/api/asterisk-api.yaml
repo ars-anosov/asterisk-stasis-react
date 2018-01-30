@@ -34,6 +34,8 @@ tags:
     description: "Мини-АТС"
   - name: callPlatform
     description: "Колл-Центр"
+  - name: Data
+    description: Различные данные для анализа
 
 ################################################################################
 #                                    Paths                                     #
@@ -62,9 +64,7 @@ paths:
         200:
           description: "активные каналы"
           schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/platform_channels"
+            $ref: "#/definitions/channels_state"
         202:
           description: "пусто"
           schema:
@@ -121,6 +121,39 @@ paths:
       x-swagger-router-controller: "CallPlatform"
     x-swagger-router-controller: "CallPlatform"
 
+  /chanlink:
+    get:
+      tags:
+        - Data
+      description: channels links Object
+      operationId: chanlink_get
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: token
+          in: header
+          description: token
+          required: true
+          type: string
+        - name: layer
+          in: query
+          description: на каком уровне линки L1, L2, L3
+          required: true
+          type: string
+      responses:
+        '200':
+          description: chanlinks
+          schema:
+            $ref: '#/definitions/chanlinks'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/errorModel'
+      x-swagger-router-controller: Data
+      
+    x-swagger-router-controller: Data
 ################################################################################
 #                                 Definitions                                  #
 ################################################################################
@@ -157,43 +190,66 @@ definitions:
     properties:
       status:
         type: "string"
-  platform_channels:
+
+  channels_state:
     type: "object"
     properties:
-      sip_tg:
-        type: "string"
-      application:
-        type: "string"
-      context:
-        type: "string"
-      extension:
-        type: "string"
-      channelstatedesc:
-        type: "string"
-      calleridnum:
-        type: "string"
-      connectedlinenum:
-        type: "string"
-      duration:
-        type: "string"
-      b_sip_tg:
-        type: "string"
-      b_application:
-        type: "string"
-      b_context:
-        type: "string"
-      b_extension:
-        type: "string"
-      b_channelstatedesc:
-        type: "string"
-      b_calleridnum:
-        type: "string"
-      b_connectedlinenum:
-        type: "string"
-      b_duration:
-        type: "string"
-      call_direction:
-        type: "string"
+      channels:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            id:
+              type: "string"
+            name:
+              type: "string"
+            state:
+              type: "string"
+            creationtime:
+              type: "string"
+            dialplan_context:
+              type: "string"
+            dialplan_exten:
+              type: "string"
+            caller_number:
+              type: "string"
+      bridges:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            id:
+              type: "string"
+            leg1:
+              type: "string"
+            leg2:
+              type: "string"
+
+# chanlinks -------------------------------------------------------------------
+  chanlinks:
+    type: object
+    properties:
+      nodes:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            group:
+              type: integer
+      links:
+        type: array
+        items:
+          type: object
+          properties:
+            source:
+              type: string
+            target:
+              type: string
+            value:
+              type: integer
+
   dummy:
     type: "object"
     properties:

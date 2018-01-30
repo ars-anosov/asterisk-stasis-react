@@ -2,7 +2,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom'
-import { OpenApiSwagger, HZ123 } from './components/asterisk-react-component'
+import { OpenApiSwagger, ChannelsMonitor } from './components/asterisk-react-component'
 
 window.localStorage.setItem('token', 'test')
 
@@ -20,7 +20,7 @@ swg.connect((client, err) => {
   else {
     ReactDOM.render(
       <div>
-        <HZ123 swgClient={client} headerTxt='HZ123 component' />
+        <ChannelsMonitor swgClient={client} headerTxt='ChannelsMonitor component' />
       </div>,
       document.getElementById('root')
     )
