@@ -7,33 +7,100 @@ exports.apiAction = function(req, res, next) {
   var args                = req.swagger.params
 
   var respObj = {
-    "nodes": [],
-    "links": []
+    "nodes": [
+      // Ringing to External
+      {
+        "id": "Down: pgw_g729_g711a",
+        "group": "Down",
+        "desc": "8"
+      },
+      {
+        "id": "Ring: 1504 -> 79252001234",
+        "group": "Ring",
+        "desc": "6"
+      },
+      // Speech to External
+      {
+        "id": "Up: pgw_g729_g711a",
+        "group": "Up",
+        "desc": "8"
+      },
+      {
+        "id": "Up: 1501 -> 74957856401",
+        "group": "Up",
+        "desc": "6"
+      },
+      {
+        "id": "Up: 1502 -> 74957856402",
+        "group": "Up",
+        "desc": "6"
+      },
+      // Ring to local
+      {
+        "id": "Ringing: 1506",
+        "group": "Ringing",
+        "desc": "6"
+      },
+      {
+        "id": "Ring: 1505 -> 1506",
+        "group": "Ring",
+        "desc": "6"
+      }
+    ],
+    "links": [
+      // Ringing to External
+      {
+        "value": 1,
+        "source": "Ring: 1504 -> 79252001234",
+        "target": "Down: pgw_g729_g711a"
+      },
+      // Speech to External
+      {
+        "value": 1,
+        "source": "Up: 1501 -> 74957856401",
+        "target": "Up: pgw_g729_g711a"
+      },
+      {
+        "value": 1,
+        "source": "Up: 1502 -> 74957856402",
+        "target": "Up: pgw_g729_g711a"
+      },
+      // Ring to local
+      {
+        "value": 1,
+        "source": "Ring: 1505 -> 1506",
+        "target": "Ringing: 1506"
+      }
+    ]
   }
+
+
+
+
 
   var chanObj = req.myObj.PlatformChannelsNow.channels
   var brObj = req.myObj.PlatformChannelsNow.bridges
-  var nodesObj = {}
+  var nodesObj = {"Up: pgw_g729_g711a": 1, "Down: pgw_g729_g711a": 1}
 
   if (args.layer.value) {
     //console.log('layer:' + args.layer.value)
   }
 
   for (let key in chanObj) {
-    let idCustom = chanObj[key].dialplan.context +': '+ chanObj[key].name.substr(6, chanObj[key].name.length - 6 - 9) +' -> '+ chanObj[key].dialplan.exten
+    let idCustom = chanObj[key].state +': '+ chanObj[key].name.substr(6, chanObj[key].name.length - 6 - 9) + (chanObj[key].dialplan.exten === 's' ? '' : ' -> '+chanObj[key].dialplan.exten)
     if (!(nodesObj[idCustom] === 1)) {
       respObj.nodes.push({
         'id':               idCustom,
-        'group':            chanObj[key].dialplan.context,
-        'desc':             'test desc'
+        'group':            chanObj[key].state,
+        'desc':             idCustom.match(/pgw/) ? '8' : '6'
       })
       nodesObj[idCustom] = 1
     }
   }
 
   for (let key in brObj) {
-    let idCustom0 = brObj[key].channels[0].dialplan.context +': '+ brObj[key].channels[0].name.substr(6, brObj[key].channels[0].name.length - 6 - 9) + ' -> '+ brObj[key].channels[0].dialplan.exten
-    let idCustom1 = brObj[key].channels[1].dialplan.context +': '+ brObj[key].channels[1].name.substr(6, brObj[key].channels[1].name.length - 6 - 9) + ' -> '+ brObj[key].channels[1].dialplan.exten
+    let idCustom0 = brObj[key].channels[0].state +': '+ brObj[key].channels[0].name.substr(6, brObj[key].channels[0].name.length - 6 - 9) + (brObj[key].channels[0].dialplan.exten === 's' ? '' : ' -> '+ brObj[key].channels[0].dialplan.exten)
+    let idCustom1 = brObj[key].channels[1].state +': '+ brObj[key].channels[1].name.substr(6, brObj[key].channels[1].name.length - 6 - 9) + (brObj[key].channels[1].dialplan.exten === 's' ? '' : ' -> '+ brObj[key].channels[1].dialplan.exten)
     respObj.links.push({
       'value':            1,
       'source':           idCustom0,

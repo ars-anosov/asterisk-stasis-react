@@ -116,8 +116,12 @@ module.exports.Stasis = function(ariAsterClient, stasisName, mysqlPoolAsterisk, 
 
 			var origAon = mysqlResult[0].aon;
 			//mysqlResult[0].prefix = '';				//  звонки в PGW без префикса
-			var origExten = 'PJSIP/' + mysqlResult[0].prefix + channel.dialplan.exten + '@pgw_' + mysqlResult[0].codec;
-			if (mysqlResult[0].redirection) { origExten = 'PJSIP/' + mysqlResult[0].prefix + mysqlResult[0].redirection + '@pgw_' + mysqlResult[0].codec; }
+
+			var origExten = 'PJSIP/' + mysqlResult[0].prefix + channel.dialplan.exten + '@pgw_' + mysqlResult[0].codec
+			
+			if (channel.dialplan.exten.length === 3) { origExten = 'PJSIP/' + channel.dialplan.exten }
+			
+			if (mysqlResult[0].redirection) { origExten = 'PJSIP/' + mysqlResult[0].prefix + mysqlResult[0].redirection + '@pgw_' + mysqlResult[0].codec }
 			
 			
 

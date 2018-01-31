@@ -36,7 +36,7 @@ export class ChannelsMonitor extends React.Component {
       var color = d3.scaleOrdinal(d3.schemeCategory20);
 
       var simulation = d3.forceSimulation()
-          .force("link", d3.forceLink().distance(60).id(function(d) { return d.id; }))
+          .force("link", d3.forceLink().distance(100).strength(0.5).id(function(d) { return d.id; }))
           .force("charge", d3.forceManyBody())
           .force("center", d3.forceCenter(width / 2, height / 2));
 
@@ -60,7 +60,7 @@ export class ChannelsMonitor extends React.Component {
 
       // get Groups
       var drawSvgContent = () => {
-        var groupsObj = {}
+        //var groupsObj = {}
         //this.props.swgClient.apis.Configuration[this.apiCmd.getGroups]({token: this.apiCmd.token})
         //.then((res) => {
         //  if (res.status === 200) {
@@ -73,18 +73,29 @@ export class ChannelsMonitor extends React.Component {
         //    console.log(res.body)
         //  }
         //})
-        groupsObj['from-internal']  = {'name': 'Исходящие', 'color': color(0)}
-        groupsObj['from-external']  = {'name': 'Входящие', 'color': color(1)}
-        groupsObj['no_context']     = {'name': 'core', 'color': color(2)}
-        drawLinks(groupsObj)
+        //drawLinks(groupsObj)
+        drawLinks()
       }
 
       // Get Nodes and Links
-      var drawLinks = (groupsObj) => {
+      var drawLinks = () => {
         this.props.swgClient.apis.Data[this.apiCmd.getLinks]({token: this.apiCmd.token, layer: layer })
         .then((res) => {
           if (res.status === 200) {
-            var graph = res.body
+            
+            // Data for D3 draw
+            var graph = {nodes: [], links: []}
+            // HASH: group names
+            var groupsObj = {}
+
+
+            res.body.nodes.map((row, i) => { groupsObj[row.group] = {name: row.group, color: '', number: 0} })
+            res.body.nodes.map((row, i) => { groupsObj[row.group].number = groupsObj[row.group].number + 1 })
+            var colorOfGroup = 0
+            for (let key in groupsObj) { groupsObj[key].color = color(colorOfGroup++) }
+
+
+            graph = res.body
 
             var link = svg.append("g")
                 .attr("class", "links")
@@ -98,7 +109,7 @@ export class ChannelsMonitor extends React.Component {
               .selectAll("circle")
               .data(graph.nodes)
               .enter().append("circle")
-                .attr("r", 8)
+                .attr("r", function(d) { return d.desc })
                 .attr("fill", function(d) { return groupsObj[d.group].color })
                 .call(d3.drag()
                     .on("start", dragstarted)
@@ -123,16 +134,14 @@ export class ChannelsMonitor extends React.Component {
                 })
 
             // Legend
-            var groupsPresent = {}
-            res.body.nodes.map((row, i) => { groupsPresent[row.group] = 1 })
             var topPx = 20
-            for (let key in groupsPresent) {
+            for (let key in groupsObj) {
               svg.append("text")
                   .attr("class", "texts")
                   .attr("fill", function(d) { return groupsObj[key].color })
                   .attr("x", "5px")
                   .attr("y", topPx+"px")
-                  .text(groupsObj[key].name)
+                  .text(groupsObj[key].name + ' (' + groupsObj[key].number + ' шт.)')
               topPx = topPx + 12
             }
 
@@ -156,7 +165,7 @@ export class ChannelsMonitor extends React.Component {
                   .attr("cy", function(d) { return d.y; })
   
               ttt
-                  .attr("x", function(d) { return d.x-5; })
+                  .attr("x", function(d) { return d.x-2; })
                   .attr("y", function(d) { return d.y-10; })
             }
 
@@ -191,9 +200,7 @@ export class ChannelsMonitor extends React.Component {
       <pre className='std-item-header'>{this.props.headerTxt}</pre>
 
       <pre> 
-        <button className='get-bttn' onClick={this.handleClkAction} value='L1'>L1</button>
-        <button className='get-bttn' onClick={this.handleClkAction} value='L2'>L2</button>
-        <button className='get-bttn' onClick={this.handleClkAction} value='L3'>L3</button>
+        <button className='get-bttn' onClick={this.handleClkAction} value='Refrash'>Refrash</button>
       </pre>
 
       <svg ref={node => this.node = node} width={640} height={480}></svg>
