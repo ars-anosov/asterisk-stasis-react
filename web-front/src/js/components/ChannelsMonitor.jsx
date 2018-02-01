@@ -19,6 +19,75 @@ export class ChannelsMonitor extends React.Component {
       getGroups:  'hostgroup_get'
     }
 
+    // Сюда рисуем кругляши
+    var svg = {}
+    var graph = {nodes: [], links: []}
+
+
+    var socket = new WebSocket('ws://192.168.13.97:8006');
+    var cxNewChan = 140;
+    var cyNewChan = 30;
+
+    socket.onopen = function() {
+      console.log("WebSocket Соединение установлено.");
+    };
+    
+    socket.onclose = function(event) {
+      if (event.wasClean) {
+        console.log('WebSocket Соединение закрыто чисто');
+      } else {
+        console.log('WebSocket Обрыв соединения'); // например, "убит" процесс сервера
+      }
+      console.log('Код: ' + event.code + ' причина: ' + event.reason);
+    };
+    
+    socket.onerror = function(error) {
+      console.log("WebSocket Ошибка " + error.message);
+    };
+
+    socket.onmessage = function(event) {
+
+      var wsResData = {}
+      if (event.data) {
+        wsResData = JSON.parse(event.data)
+        console.log(wsResData)
+      }
+
+      // Воздействие на swg
+      if (svg) {
+        
+        if (wsResData.type === 'StasisEnd') {
+          let chanIdReplaced = wsResData.channel.id.replace(/[\-\.]/gi, '_')
+          svg.select('#id'+chanIdReplaced).attr("fill","#000000")
+          svg.select('#idt'+chanIdReplaced).attr("fill","#000000")
+          //svg.select('#id'+chanIdReplaced).remove()
+          //svg.select('#idt'+chanIdReplaced).remove()
+        }
+
+        /*
+        if (wsResData.type === 'StasisStart') {
+          let chanIdReplaced = wsResData.channel.id.replace(/[\-\.]/gi, '_')
+          
+          svg.append("circle")
+            .attr("id", 'id'+chanIdReplaced)
+            .attr("r", 6)
+            .attr("cx", cxNewChan)
+            .attr("cy", 10)
+            .attr("fill", "#ff0000")
+
+          svg.append("text")
+            .attr("id", 'idt'+chanIdReplaced)
+            .attr("x", cxNewChan)
+            .attr("y", cyNewChan)
+            .attr("fill", "#ff0000")
+            .text(wsResData.channel.name)
+
+          cxNewChan = cxNewChan + 20
+          cyNewChan = cyNewChan + 10
+        }
+        */
+      }
+    };
 
 
 
@@ -27,9 +96,9 @@ export class ChannelsMonitor extends React.Component {
       // https://bl.ocks.org/mbostock/4062045
       var self = this
 
-      var svg = d3.select(this.node),
-          width = +svg.attr("width"),
-          height = +svg.attr("height");
+      svg = d3.select(this.node)
+      var width = +svg.attr("width")
+      var height = +svg.attr("height")
 
       svg.selectAll("*").remove()
 
@@ -84,7 +153,7 @@ export class ChannelsMonitor extends React.Component {
           if (res.status === 200) {
             
             // Data for D3 draw
-            var graph = {nodes: [], links: []}
+            graph = {nodes: [], links: []}
             // HASH: group names
             var groupsObj = {}
 
@@ -109,7 +178,8 @@ export class ChannelsMonitor extends React.Component {
               .selectAll("circle")
               .data(graph.nodes)
               .enter().append("circle")
-                .attr("r", function(d) { return d.desc })
+                .attr("id", function(d) { return 'id'+d.idChannel.replace(/[\-\.]/gi, '_') })
+                .attr("r", function(d) { return d.size })
                 .attr("fill", function(d) { return groupsObj[d.group].color })
                 .call(d3.drag()
                     .on("start", dragstarted)
@@ -117,21 +187,17 @@ export class ChannelsMonitor extends React.Component {
                     .on("end", dragended))
 
             node.append("title")
-              .text(function(d) { return d.id+', group: '+groupsObj[d.group].name })
+              .text(function(d) { return d.idChannel })
+
 
             var ttt = svg.append("g")
                 .attr("class", "texts")
               .selectAll("text")
               .data(graph.nodes)
               .enter().append("text")
+                .attr("id", function(d) { return 'idt'+d.idChannel.replace(/[\-\.]/gi, '_') })
                 .attr("fill", function(d) { return groupsObj[d.group].color })
-                .text(function(d) {
-                  // dns.name
-                  let sss = d.id.split('.')
-                  // IP v4
-                  if ( d.id.match(/^\d+\.\d+\.\d+\.\d+$/i) !== null ) { sss[0] = d.id }
-                  return sss[0];
-                })
+                .text(function(d) { return d.id })
 
             // Legend
             var topPx = 20

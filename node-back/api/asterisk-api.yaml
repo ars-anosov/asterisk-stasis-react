@@ -238,8 +238,10 @@ definitions:
               type: string
             group:
               type: string
-            desc:
+            idChannel:
               type: string
+            size:
+              type: integer
       links:
         type: array
         items:
