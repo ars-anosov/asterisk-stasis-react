@@ -23,31 +23,16 @@ export class ChannelsMonitor extends React.Component {
     var svg = {}
     var graph = {nodes: [], links: []}
 
+    // WebSoket Response (recieved text message -> event.data)
+    var wsResData = {}
 
-    var socket = new WebSocket('ws://192.168.13.97:8006');
+
     var cxNewChan = 140;
     var cyNewChan = 30;
 
-    socket.onopen = function() {
-      console.log("WebSocket Соединение установлено.");
-    };
-    
-    socket.onclose = function(event) {
-      if (event.wasClean) {
-        console.log('WebSocket Соединение закрыто чисто');
-      } else {
-        console.log('WebSocket Обрыв соединения'); // например, "убит" процесс сервера
-      }
-      console.log('Код: ' + event.code + ' причина: ' + event.reason);
-    };
-    
-    socket.onerror = function(error) {
-      console.log("WebSocket Ошибка " + error.message);
-    };
 
-    socket.onmessage = function(event) {
+    var socket_onmessage = function(event) {
 
-      var wsResData = {}
       if (event.data) {
         wsResData = JSON.parse(event.data)
         console.log(wsResData)
@@ -262,7 +247,7 @@ export class ChannelsMonitor extends React.Component {
     console.log('ChannelsMonitor render')
 
     var finalTemplate =
-    <div className='host-graph-win'>
+    <div className='channelsmonitor-win'>
       <pre className='std-item-header'>{this.props.headerTxt}</pre>
 
       <pre> 

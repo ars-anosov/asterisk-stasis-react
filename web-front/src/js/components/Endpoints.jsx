@@ -1,7 +1,7 @@
 import React from 'react';
+import EndpointRow from './EndpointRow'
 
-
-export class HZ123 extends React.Component {
+export class Endpoints extends React.Component {
 
   constructor(args) {
     super(args)      // наполняю this от Page
@@ -12,7 +12,6 @@ export class HZ123 extends React.Component {
       selectHostGroup:  this.props.selectHostGroup || '',
       showResult:       true,
       searchResult:     null,
-      wsLog:            ''
     }
 
     this.handleChangeInput    = this.handleChangeInput.bind(this)
@@ -22,10 +21,10 @@ export class HZ123 extends React.Component {
 
     this.apiCmd = {
       token:      window.localStorage.getItem('token'),
-      get:        'host_get',
-      post:       'host_post',
-      put:        'host_put',
-      del:        'host_del',
+      get:        'endpoint_get',
+      post:       'endpoint_post',
+      put:        'endpoint_put',
+      del:        'endpoint_del',
       getGroups:  'hostgroup_get'
     }
 
@@ -60,7 +59,7 @@ export class HZ123 extends React.Component {
 
         if (res.status === 200) {
           res.body.map( (row, i) => {
-            searchResultTemplate.push(<HostConfigRow {...{Win: this}} row={row} key={i}/>)
+            searchResultTemplate.push(<EndpointRow {...{Win: this}} row={row} key={i}/>)
           })
         }
         else {
@@ -93,31 +92,6 @@ export class HZ123 extends React.Component {
     //.catch((err) => {
     //  //err
     //})
-
-
-
-
-    var socket = new WebSocket('ws://192.168.13.97:8006');
-    
-    socket.onopen = function() {
-      console.log("Соединение установлено.");
-    };
-    
-    socket.onclose = function(event) {
-      if (event.wasClean) {
-        console.log('Соединение закрыто чисто');
-      } else {
-        console.log('Обрыв соединения'); // например, "убит" процесс сервера
-      }
-      console.log('Код: ' + event.code + ' причина: ' + event.reason);
-    };
-    
-    var self = this
-    socket.onmessage = function(event) {
-      console.log(event.data)
-      //self.setState({wsLog: self.state.wsLog + '\n' + event.data})
-      self.setState({wsLog: event.data})
-    }
 
 
   }
@@ -161,10 +135,10 @@ export class HZ123 extends React.Component {
 
 
   render() {
-    console.log('HZ123 render')
+    console.log('Endpoints render')
 
     var finalTemplate =
-    <div className='hz123-win'>
+    <div className='endpoints-win'>
       <div className='std-item-header' onClick={this.handleClkShowResult}>{this.props.headerTxt}</div>
 
       <input type='text' placeholder='hz' value={this.state.inputHostName} onChange={this.handleChangeInput} />
@@ -181,8 +155,6 @@ export class HZ123 extends React.Component {
       <button className='add-bttn' onClick={this.handleClkAction} value='add'>Добавить</button>
 
       <div className={this.state.showResult ? '' : 'display-none'}>{this.state.searchResult}</div>
-
-      <pre>log: {this.state.wsLog}</pre>
 
     </div>
 

@@ -2,7 +2,9 @@
 
 @import "templates/Header";
 @import "templates/Footer";
-@import "templates/HostGraph";
+@import "templates/ChannelsMonitor";
+@import "templates/WsControl";
+@import "templates/Endpoints";
 
 body {
   background-color: #fff;

@@ -30,18 +30,175 @@ consumes:
 #                                   Tags                                       #
 ################################################################################
 tags:
+  - name: Configuration
+    description: Конфигурация PBX
   - name: pbx
-    description: "Мини-АТС"
-  - name: callPlatform
-    description: "Колл-Центр"
+    description: Состояние PBX
   - name: Data
-    description: Различные данные для анализа
+    description: Smart данные всякие
+  - name: callPlatform
+    description: Тестовый "Колл-Центр" на базе PBX
 
 ################################################################################
 #                                    Paths                                     #
 ################################################################################
 paths:
-  /pbx/channelsState:
+
+  /endpoint:
+    get:
+      tags:
+        - Configuration
+      description: endpoints list
+      operationId: endpoint_get
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: token
+          in: header
+          description: token
+          required: true
+          type: string
+        - name: name
+          in: query
+          description: endpoint name
+          required: false
+          type: string
+        - name: group
+          in: query
+          description: endpoint group id
+          required: false
+          type: string
+      responses:
+        '200':
+          description: endpoint list
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/endpoint_getlist'
+        '202':
+          description: no list
+          schema:
+            $ref: '#/definitions/dummy'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/errorModel'
+      x-swagger-router-controller: Configuration
+    post:
+      tags:
+        - Configuration
+      description: endpoint add 
+      operationId: endpoint_post
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: token
+          in: header
+          description: token
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: |
+            В zabbix-reactor написана логика добавления хоста в Zabbix на базе двух параметров dns-адреса хоста и groupid.
+            Можно накрутить любую логику по своему желанию. См. controller "config_endpoint_post.js".
+          required: true
+          schema:
+            $ref: '#/definitions/endpoint_add'
+      responses:
+        '200':
+          description: endpoint created
+          schema:
+            $ref: '#/definitions/dummy'
+        '202':
+          description: endpoint not created
+          schema:
+            $ref: '#/definitions/dummy'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/errorModel'
+      x-swagger-router-controller: Configuration
+    put:
+      tags:
+        - Configuration
+      description: endpoint update
+      operationId: endpoint_put
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: token
+          in: header
+          description: token
+          required: true
+          type: string
+        - name: endpointid
+          in: query
+          description: endpoint id
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: endpoint name
+          required: true
+          schema:
+            $ref: '#/definitions/endpoint_update'
+      responses:
+        '200':
+          description: endpoint updated
+          schema:
+            $ref: '#/definitions/dummy'
+        '202':
+          description: endpoint not updated
+          schema:
+            $ref: '#/definitions/dummy'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/errorModel'
+      x-swagger-router-controller: Configuration
+    delete:
+      tags:
+        - Configuration
+      description: endpoint delete
+      operationId: endpoint_del
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: token
+          in: header
+          description: token
+          required: true
+          type: string
+        - name: endpointid
+          in: query
+          description: endpoint id
+          required: true
+          type: string
+      responses:
+        '200':
+          description: endpoint deleted
+          schema:
+            $ref: '#/definitions/dummy'
+        '202':
+          description: endpoint not deleted
+          schema:
+            $ref: '#/definitions/dummy'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/errorModel'
+      x-swagger-router-controller: Configuration
+
+  /channelsState:
     get:
       tags:
       - "pbx"
@@ -158,6 +315,43 @@ paths:
 #                                 Definitions                                  #
 ################################################################################
 definitions:
+
+# endpoint_add ------------------------------------------------------------------------
+  endpoint_add:
+    type: object
+    properties:
+      dns:
+        type: string
+      groupid:
+        type: integer
+
+# endpoint_update ------------------------------------------------------------------------
+  endpoint_update:
+    type: object
+    properties:
+      description:
+        type: string
+      inventory:
+        type: object
+        properties:
+          notes:
+            type: string
+
+# endpoint_list -------------------------------------------------------------------
+  endpoint_getlist:
+    type: object
+    properties:
+      technology:
+        type: string
+      resource:
+        type: string
+      state:
+        type: string
+      channel_ids:
+        type: array
+        items:
+          type: string
+
   inOriginateListObj:
     type: "object"
     required:

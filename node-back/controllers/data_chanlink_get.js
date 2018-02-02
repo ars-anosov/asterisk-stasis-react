@@ -10,82 +10,26 @@ exports.apiAction = function(req, res, next) {
     "nodes": [
       // Ringing to External
       {
-        "idChannel": "test_id_01",
+        "idChannel": "core_fixed_01",
         "id": "core:Down: pgw_g729_g711a",
         "group": "core:Down",
         "size": 8
       },
       {
-        "idChannel": "test_id_02",
-        "id": "office:Ring: 1504 -> 79252001234",
-        "group": "office:Ring",
-        "size": 6
-      },
-      // Speech to External
-      {
-        "idChannel": "test_id_03",
+        "idChannel": "core_fixed_02",
         "id": "core:Up: pgw_g729_g711a",
         "group": "core:Up",
         "size": 8
-      },
-      {
-        "idChannel": "test_id_04",
-        "id": "office:Up: 1501 -> 74957856401",
-        "group": "office:Up",
-        "size": 6
-      },
-      {
-        "idChannel": "test_id_05",
-        "id": "office:Up: 1502 -> 74957856402",
-        "group": "office:Up",
-        "size": 6
-      },
-      // Ring to local
-      {
-        "idChannel": "test_id_06",
-        "id": "office:Ringing: 1506",
-        "group": "office:Ringing",
-        "size": 6
-      },
-      {
-        "idChannel": "test_id_07",
-        "id": "office:Ring: 1505 -> 1506",
-        "group": "office:Ring",
-        "size": 6
       }
     ],
-    "links": [
-      // Ringing to External
-      {
-        "value": 1,
-        "source": "office:Ring: 1504 -> 79252001234",
-        "target": "core:Down: pgw_g729_g711a"
-      },
-      // Speech to External
-      {
-        "value": 1,
-        "source": "office:Up: 1501 -> 74957856401",
-        "target": "core:Up: pgw_g729_g711a"
-      },
-      {
-        "value": 1,
-        "source": "office:Up: 1502 -> 74957856402",
-        "target": "core:Up: pgw_g729_g711a"
-      },
-      // Ring to local
-      {
-        "value": 1,
-        "source": "office:Ring: 1505 -> 1506",
-        "target": "office:Ringing: 1506"
-      }
-    ]
+    "links": []
   }
 
 
 
   var chanObj = req.myObj.PlatformChannelsNow.channels
   var brObj = req.myObj.PlatformChannelsNow.bridges
-  var nodesObj = {"core:Up: pgw_g729_g711a": 1, "core:Down: pgw_g729_g711a": 1}
+  var nodesObj = {"core:Down: pgw_g729_g711a": 1, "core:Up: pgw_g729_g711a": 1,}
 
   if (args.layer.value) {
     //console.log('layer:' + args.layer.value)
@@ -111,7 +55,7 @@ exports.apiAction = function(req, res, next) {
         'id':               idCustom,
         'idChannel':        chanObj[key].id,
         'group':            groupCustomCreate(chanObj[key]),
-        'size':             idCustom.match(/pgw/) ? 8 : 6
+        'size':             idCustom.match(/pgw_/) ? 8 : 6
       })
       nodesObj[idCustom] = 1
     }
