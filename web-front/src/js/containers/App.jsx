@@ -27,7 +27,7 @@ class App extends React.Component {
 function mapStateToProps (state) {
   //console.log(state)
   return {
-    endpoints: state.endpoints
+    endpoints: state.endpointsRdcr
   }
 }
 

@@ -9,7 +9,7 @@ const initialState = {
 }
 
 
-export default function endpoints(state = initialState, action) {
+export default function endpointsRdcr(state = initialState, action) {
 
   switch (action.type) {
     case SWG_CONNECT_REQUEST:

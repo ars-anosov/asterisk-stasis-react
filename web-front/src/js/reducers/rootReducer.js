@@ -1,5 +1,5 @@
 import { combineReducers } from 'redux'
-import endpoints from './endpointsRdcr'
+import endpointsRdcr from './endpointsRdcr'
 
 export default combineReducers({
   endpointsRdcr
