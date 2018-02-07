@@ -31,8 +31,8 @@ var path = {
     // html -----------------------------------------------
     src: {
       html:       'src/*.*',
-      js:         'src/js/*.js',
-      jsx:        'src/js/index.jsx',
+      js:         'src/js/',
+      jsx:        ['index.jsx', 'redux.jsx'],
       scss:       'src/style/*.*css',
       img:        'src/img/**/*.*',
       fonts:      'src/fonts/**/*.*'
@@ -40,19 +40,18 @@ var path = {
     build: {
       html:       'build/',
       js:         'build/js/',
-      jsx:        'index.js',
       css:        'build/css/',
       img:        'build/img/',
       fonts:      'build/fonts/'
     },
     watch: {
       html:       ['src/*.html', 'src/templates/*.html'],
-      jsx:        ['src/js/*.js*', 'src/js/{components, partails}/*.js*'],
+      jsx:        ['src/js/*.js*', 'src/js/components/*.js*', 'src/js/containers/*.js*', 'src/js/reducers/*.js*', 'src/js/store/*.js*', 'src/js/actions/*.js*', 'src/js/constants/*.js*', 'src/js/enhancers/*.js*'],
       scss:       ['src/style/**/*.*css'],
       img:        ['src/img/**/*.*'],
       fonts:      ['src/fonts/**/*.*']
     },
-    clean:          './build',
+    clean:          './build/*',
 };
 
 var webserverConfig = {
@@ -102,30 +101,35 @@ gulp.task('html:build', function () {
 });
 
 gulp.task('jsx:build', function () {
-  // .js files
-  gulp.src(path.src.js) 
+  // .js files (vanila js) if exists
+  gulp.src(path.src.js+'*.js') 
     .pipe( rigger() ) 
     .pipe( gulpif( buildFlag.sourcemap, sourcemaps.init({loadMaps: true}) ) ) 
     .pipe( uglify() ) 
     .pipe( gulpif( buildFlag.sourcemap, sourcemaps.write('./maps') ) ) 
     .pipe( gulp.dest(path.build.js) );
 
-  // .jsx ONLY ONE file
-  browserify({
-    entries: path.src.jsx,
-    extensions: ['.js', '.jsx'],                                            // какие файлы будет обрабатывать browserify
-    //noParse: [require.resolve('template for future use')],
-    debug: false                  // debug заставляет browserify строить sourcemaps. На входе файл "path.src.jsx"
+  // .jsx (ES6 and JSX)
+  path.src.jsx.map ( (row, i) => {
+    browserify({
+      entries: path.src.js+row,
+      extensions: ['.js', '.jsx'],                                            // какие файлы будет обрабатывать browserify
+      //noParse: [require.resolve('template for future use')],
+      debug: false                                                            // debug заставляет browserify строить sourcemaps. На входе файл "path.src.jsx"
+    })
+      .transform('babelify', {presets: ['env', 'stage-0', 'react']})           // babel + presets
+      .bundle()                                                               // эта херня выдает "text stream"
+      .pipe( source( row.replace(/\.jsx/i, '\.js') ) )                        // конвертируем в "vinyl stream". Теперь большинство gulp-плагинов подцепятся к stream.
+      
+      .pipe( gulpif( buildFlag.production, buffer() ) )                       // Плагину uglify нужен "buffered vinyl file object". Конвертируем.
+      .pipe( gulpif( buildFlag.sourcemap, sourcemaps.init({loadMaps: true}) ) )
+      .pipe( gulpif( buildFlag.production, uglify() ) )
+      .pipe( gulpif( buildFlag.sourcemap, sourcemaps.write('./maps') ) )
+
+      .pipe( gulp.dest(path.build.js) )
+      .pipe( reload({stream: true}) )
   })
-    .transform('babelify', {presets: ['env', 'react']})                     // modules: babel-preset-es2015 -> теперь env
-    .bundle()                                                               // эта херня выдает "text stream"
-    .pipe( source(path.build.jsx) )                                         // конвертируем в "vinyl stream". Теперь большинство gulp-плагинов подцепятся к stream. На выходе файл "path.build.jsx"
-    .pipe( gulpif( buildFlag.production, buffer() ) )                       // Плагину uglify нужен "buffered vinyl file object". Конвертируем.
-    .pipe( gulpif( buildFlag.sourcemap, sourcemaps.init({loadMaps: true}) ) )
-    .pipe( gulpif( buildFlag.production, uglify() ) )
-    .pipe( gulpif( buildFlag.sourcemap, sourcemaps.write('./maps') ) )
-    .pipe( gulp.dest(path.build.js) )
-    .pipe( reload({stream: true}) );
+
 });
 
 gulp.task('scss:build', function () {
