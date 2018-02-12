@@ -21,7 +21,6 @@
   },
   "homepage": "https://github.com/ars-anosov/asterisk-stasis-react#readme",
   "dependencies": {
-    "d3": "^4.12.0",
-    "swagger-client": "^3.3.3"
+    "d3": "^4.12.0"
   }
 }

@@ -13,7 +13,7 @@ export default function configureStore(initialState) {
     rootReducer,
     initialState,
     applyMiddleware(thunk, logger)
-    //applyMiddleware(thunk)
+    //applyMiddleware(ping)
   )
   
   return store

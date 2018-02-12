@@ -19,67 +19,24 @@ export class ChannelsMonitor extends React.Component {
       getGroups:  'hostgroup_get'
     }
 
-    // Сюда рисуем кругляши
-    var svg = {}
-    var graph = {nodes: [], links: []}
-
-    // WebSoket Response (recieved text message -> event.data)
-    var wsResData = {}
 
 
-    var cxNewChan = 140;
-    var cyNewChan = 30;
 
 
-    var socket_onmessage = function(event) {
 
-      if (event.data) {
-        wsResData = JSON.parse(event.data)
-        console.log(wsResData)
-      }
-
-      // Воздействие на swg
-      if (svg) {
-        
-        if (wsResData.type === 'StasisEnd') {
-          let chanIdReplaced = wsResData.channel.id.replace(/[\-\.]/gi, '_')
-          svg.select('#id'+chanIdReplaced).attr("fill","#000000")
-          svg.select('#idt'+chanIdReplaced).attr("fill","#000000")
-          //svg.select('#id'+chanIdReplaced).remove()
-          //svg.select('#idt'+chanIdReplaced).remove()
-        }
-
-        /*
-        if (wsResData.type === 'StasisStart') {
-          let chanIdReplaced = wsResData.channel.id.replace(/[\-\.]/gi, '_')
-          
-          svg.append("circle")
-            .attr("id", 'id'+chanIdReplaced)
-            .attr("r", 6)
-            .attr("cx", cxNewChan)
-            .attr("cy", 10)
-            .attr("fill", "#ff0000")
-
-          svg.append("text")
-            .attr("id", 'idt'+chanIdReplaced)
-            .attr("x", cxNewChan)
-            .attr("y", cyNewChan)
-            .attr("fill", "#ff0000")
-            .text(wsResData.channel.name)
-
-          cxNewChan = cxNewChan + 20
-          cyNewChan = cyNewChan + 10
-        }
-        */
-      }
-    };
 
 
 
     // Grapf ----------------------------------------------
-    this.forceDirectedGraph = (layer) => {
+    this.forceDirectedGraph = (layer, socket) => {
       // https://bl.ocks.org/mbostock/4062045
       var self = this
+
+      // Сюда рисуем кругляши
+      var svg = {}
+      var graph = {nodes: [], links: []}
+
+
 
       svg = d3.select(this.node)
       var width = +svg.attr("width")
@@ -229,6 +186,23 @@ export class ChannelsMonitor extends React.Component {
       }
 
       drawSvgContent()
+
+      socket.onmessage = (event) => {
+  
+        if (event.data) {
+          var wsResData = JSON.parse(event.data)
+          console.log(wsResData)
+
+          if (wsResData.type === 'StasisEnd') {
+            let chanIdReplaced = wsResData.channel.id.replace(/[\-\.]/gi, '_')
+            svg.select('#id'+chanIdReplaced).attr("fill","#000000")
+            svg.select('#idt'+chanIdReplaced).attr("fill","#000000")
+          }
+        }
+
+      }
+  
+
     }
 
   }
@@ -237,7 +211,7 @@ export class ChannelsMonitor extends React.Component {
 
 
   handleClkAction(event) {
-    this.forceDirectedGraph(event.target.value)
+    this.forceDirectedGraph(event.target.value, this.props.wsClient)
   }
 
 

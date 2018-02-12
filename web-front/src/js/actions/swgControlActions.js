@@ -3,7 +3,7 @@ import OpenApiSwagger from 'swagger-client'
 import {
   SWG_CONNECT_REQUEST,
   SWG_CONNECT_SUCCESS
-} from '../constants/endpointsConst'
+} from '../constants/swgControlConst'
 
 export function swgConnect(specUrl) {
   
@@ -11,7 +11,7 @@ export function swgConnect(specUrl) {
     // try
     dispatch({
       type: SWG_CONNECT_REQUEST,
-      payload: {}
+      payload: {'swgClient': {}}
     })
 
     OpenApiSwagger(specUrl)
@@ -20,7 +20,7 @@ export function swgConnect(specUrl) {
           // connected
           dispatch({
             type: SWG_CONNECT_SUCCESS,
-            payload: client
+            payload: {'swgClient': client}
           })
           console.log('swg client NEW connection in Reducer')
         }

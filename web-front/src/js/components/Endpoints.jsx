@@ -28,11 +28,6 @@ export class Endpoints extends React.Component {
       getGroups:  'hostgroup_get'
     }
 
-    // Контейнер App наполняет this.props.swgConnect функцией из EndpointsActions
-    // В результате выполнения this.props.swgConnect() контейнер App наполняет ---> this.props.swgClient
-    this.props.swgConnect()
-
-
 
 
     // API actions ----------------------------------------
